@@ -1,14 +1,16 @@
-## NOTES
+# NOTES
 
-### Architecture
+## CONTENT
 
-### Virtualization
+## Architecture
 
-### Kernel
-#### labs
+## Virtualization
+
+## Kernel
+### labs
 - linux-kernel-labs
 
-#### knowbase
+### knowbase
 - scheduling
 - memory management
 - device model
