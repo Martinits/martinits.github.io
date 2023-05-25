@@ -1,40 +1,23 @@
 # NOTES
 
-## CONTENT
+## Cheatsheet
+
+- [linux-user](cheatsheet/linux-user.md)
+- [neovim](cheatsheet/neovim.md)
+- [sysadmin](cheatsheet/sysadmin.md)
+- [neovim](cheatsheet/neovim.md)
 
 ## Architecture
 
+- [Intel SDM Reading](arch/intel-sdm.md)
+
 ## Virtualization
 
-## Kernel
-### labs
-- linux-kernel-labs
+- [virt/intr.md](Interrupt Virtualization)
+- [virt/mem.md](Memory Virtualization)
+- [virt/io.md](IO Virtualization)
 
-### knowbase
-- scheduling
-- memory management
-- device model
-- syncronization
-    - mutex
-    - spinlock
-        - disable preemption?
-        - disable interrupt?
-    - atomic_t
-    - lockdep
-- deferred work
-    - kernel thread
-        - workqueue
-    - softirq
-        - tasklet
-        - timer
-- block io
-    - request queue
-        - Multi Queue Block Layer
-    - bio
-    - pages
-- profiling
-    - kprobe
-    - bpf
-    - perf
-    - ftrace
-    - strace
+## Kernel
+
+- [route](kernel/route.md)
+- [knowbase](kernel/knowbase.md)
