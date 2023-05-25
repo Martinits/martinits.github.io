@@ -12,9 +12,9 @@
 
 ## Virtualization
 
-- [virt/intr.md](Interrupt Virtualization)
-- [virt/mem.md](Memory Virtualization)
-- [virt/io.md](IO Virtualization)
+- [Interrupt Virtualization](virt/intr.md)
+- [Memory Virtualization](virt/mem.md)
+- [IO Virtualization](virt/io.md)
 
 ## Kernel
 
