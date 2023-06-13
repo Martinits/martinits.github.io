@@ -23,9 +23,32 @@
 
   ![Page walk](assets/page_walk.png)
 
-- 
 
-### Attestation
+
+
+### Enclave Life Cycle
+
+- Creation
+
+  | sgx driver inside kernel                   | user process                     | enclave |
+  | ------------------------------------------ | -------------------------------- | ------- |
+  |                                            | annonymous mmap分配一段内存      |         |
+  |                                            | 打开sgx设备，ioctl(CREATE)       |         |
+  | ECREATE                                    |                                  |         |
+  |                                            | 通过ioctl把enclave每一页load进去 |         |
+  | 分配EPC并copy每一页内容（EADD），并EEXTEND |                                  |         |
+  |                                            | ioctl发起EINIT                   |         |
+  | EINIT                                      |                                  |         |
+
+- Runtime Modification
+
+- Async Exit
+
+- Attestation
+
+- End of life
+
+
 
 ### References
 
