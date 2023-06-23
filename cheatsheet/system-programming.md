@@ -34,6 +34,9 @@
 
       - sendmsg之后关闭了这个fd也没关系：sendmsg会将fd的引用计数+1
 
+        - sendmsg只是get一下struct file到socket对应的数据结构（scm_cookie）中
+        - revmsg给scm_cookie中的struct file*分配一个fd
+
     - B进程revmsg
 
       - 得到的fd已经是打开的状态
