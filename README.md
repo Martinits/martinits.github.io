@@ -5,6 +5,7 @@
 - [linux-user](cheatsheet/linux-user.md)
 - [neovim](cheatsheet/neovim.md)
 - [sysadmin](cheatsheet/sysadmin.md)
+- [system-programming](cheatsheet/system-programming.md)
 
 ## Architecture
 
