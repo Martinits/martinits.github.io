@@ -74,7 +74,7 @@
           - 这个动作是sdk的sgx_sign工具完成的，构建出来一个tcs的模板放在输出的enclave.signed.so文件的特定位置
 
       - 现在到了enclave的入口点，linux-sgx:sdk/trts/linux/trts_pic.S:enclave_entry
-        - 调用nsp.cpp:enter_enclave，刚才的rdi是第一个参数
+        - 调用linux-sgx:sdk/trts/trts_nsp.cpp:enter_enclave，刚才的rdi是第一个参数
         - dispatch到trst_handle_exception
           - 做一系列安全检查，然后把SSA->GPR（存放了exception时候的现场， 变量名info）保存到enclave的栈上，再把SSA->GPR填充为2nd phase handling的入口：linux-sgx:sdk/trts/trts_veh.cpp:internal_handle_exception，rax为栈上保存的info的地址，就成了internal_handle_exception的第一个参数
 
@@ -89,7 +89,7 @@
 
     - 所以AEP其实就是一句ENCLU[ERESUME]，重新回到发生AEX的地方
       - ERESUME恢复cpu状态时使用的是CSSA-1的SSA Frame，因为AEX时候已经+1
-
+    
     - 这时重新回到enclave，SSA->GPR的状态已经改成了linux-sgx:sdk/trts/trts_veh.cpp:internal_handle_exception
       - 第一个参数是1st phase handling时保存在栈上的info的地址
       - 遍历custom handler：linux-sgx:sdk/trts/trts_veh.cpp:g_first_node
