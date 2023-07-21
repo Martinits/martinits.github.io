@@ -21,7 +21,7 @@
 
 - Address Translation
 
-  ![Page walk](assets/page_walk.png)
+  ![Page walk](assets/sgx_page_walk.png)
 
 
 
