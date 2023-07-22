@@ -25,6 +25,7 @@
     - 执行用户程序
   - occlum_pal_destroy
 - occlum mount
+  - 用于把sefs mount到host某个地方，用于debug
 - occlum的fs实现情况
   - SEFS
     - SEFS -> Rust SDK SGX File -> SGX SDK Protected File
