@@ -3,12 +3,12 @@
 - occlum这个命令是一个bash脚本（tools/occlum），dispatch到不同的功能上
 - occlum init
 - occlum build
-- occlum run -> /opt/occlum/build/bin/occlum-run（src/run/main.c + src/pal）
+- occlum run -> `/opt/occlum/build/bin/occlum-run`（`src/run/main.c + src/pal`）
   - prelude
-    - occlum_pal_\*是src/pal的C函数，occlum_ecall\*是src/libos中的extern “C“的rust函数
+    - occlum_pal\_\*是src/pal的C函数，occlum_ecall\_\*是src/libos中的extern “C“的rust函数
   - occlum_pal_init
     - pal_init_enclave
-      - 用SDK的sgx_create_enclave创建enclave，enclave文件是OCCLUM_INSTANCE/build/lib/libocclum-libos.signed.so
+      - 用SDK的sgx_create_enclave创建enclave，enclave文件是`$OCCLUM_INSTANCE/build/lib/libocclum-libos.signed.so`
       - 只是libos的动态库，没有用户程序
     - occlum_ecall_init
     - pal_run_init_process
@@ -37,7 +37,7 @@
   - Async SFS (Optional): Async Rust + Page Cache + JinDisk
 - exception handling
   - SGX SDK中的sgx_register_exception_handler可以注册custom handler
-  - occlum:src/libos/src/exception/mod.rs使用sgx_register_exception_handler注册了handler
+  - `occlum:src/libos/src/exception/mod.rs`使用sgx_register_exception_handler注册了handler
   - handler把exception当成一个occlum自定义的syscall：do_handle_exception来处理
   - 如果真的是syscall inside enclave引起的exception
     - do_handle_exception根据syscall number跳转到occlum常规syscall处理流程中
