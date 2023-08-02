@@ -86,6 +86,106 @@
 
 
 
+### SDK Supports
+
+#### Protected Filesystem Library
+
+- keys
+  - AES-GCM-128
+  - user传进来是key derivation key，用于获取encryption key
+  - 也可以auto key，从enclave sealing key获取
+    - 如果crash了，无法在另一个机器上自动恢复
+  - 用一个key生成另一个key：按照NIST SP 800-108的说明生成
+    - 使用AES-CMAC对一组相关信息的作为密钥
+    - 信息大体包括
+      - block编号、label（一个字符串）等
+      - nonce（如果是生成metadata的key，就是metadata key id）
+    - 后文提到的生成key的方法均为此
+- 会给文件上锁，多读一写
+  - 基于flock syscall，安全性依赖于kernel
+  - 文件API会自动上锁，enclave内部线程的操作被序列化
+- 加密文件结构
+  - 改过的Merkle Hash Tree（MHT）
+  - 所有node都是block size = 4KB
+  - disk = { metadata + repeat{mht_node + 96*data_node} }
+  - data或mht_node在“磁盘”上的位置（也就是block编号）很好确定：
+    - 每个node后面有96个data
+    - mht_node的编号按照level order进行，从0开始
+    - 树的append/insert操作按照level order进行
+      - mht_node的父节点的编号 =（mht_node的编号 - 1） / 32个child
+    - 从文件offset找到对应mht_node
+      - data_node编号 =（offset - 开头3KB） / 4KB
+      - mht_node的编号 = data_node编号 / 96
+      - data_node的block编号 = data_node编号 + mht_node的编号 + 1 + 1
+      - mht_node的block编号 = 
+        - data_node的block编号 - data_node编号 % 96 -1
+  - 一个metadata节点（0号block）
+    - 存放整个文件的metadata
+    - plain part + encrypted part + padding = 4KB
+    - plain part
+      - file id：a magic number = 0x5347585F46494C45
+      - major version = 1、minor version、cpu svn、isv svn
+      - update flag
+        - 如果是1，意味着上次commit的过程中crash了，需要从recovery文件中恢复
+      - metadata key id
+        - 创建文件时生成的nonce，用于生成metadata key
+      - whether to use user kdk key
+      - attribute mask
+      - metadata MAC：encrypted part的MAC
+    - encrypted part
+      - filename、size
+      - MHT root node的key和mac
+      - 文件开头3KB数据（为了节约空间）
+      - 这部分加密的密钥
+        - 如果user给了kdk：用kdk生成
+        - 如果是auto key：使用EGETKEY得到的sealing key
+          - EGETKEY的参数key id就是plain part的metadata key id
+  - 每个MHT node（包括root）
+    - root在1号block
+    - 3/4的空间用于存data block，1/4的空间用于存child node
+    - 对于4KB的block，有96个data和32个child
+    - 对每个data/child存了一个key和一个MAC
+  - 每个data/MHT-node的key都是生成的，不同的
+    - 从session_master_key生成
+    - session_master_key是每次打开文件时从empty_key（全是0）生成的
+    - 生成最多65536次之后会重新生成session_master_key
+- cache
+  - 每个文件在fopen的时候可以设置cache，默认48个page
+  - 为了性能，除非主动flush，只有在cache满了的时候才会flush
+  - flush时按照node在树中的深度顺序write back
+  - 保证integrity after crash
+    - commit to disk之前先把所有dirty nodes写入另外的recovery文件
+- pros
+  - 每个inode的data对应一个host加密文件，不会因为动态分配有空着的block，减少host上的实际大小
+  - filename matching：打开之前会检查文件名是否和创建时一致
+    - metadata里存了一个文件名，防止replay
+- cons
+  - 每个inode的data对应一个host加密文件
+    - 暴露文件数据块分布、file size in blocks、modification time
+    - 把datablock都放在一起也会暴露
+      - 但需要attacker触发enclave操作文件后对比前后差距，会更难一些
+  - 暴露一些metadata
+    - file size in blocks
+    - modification time
+    - key type (user or auto)
+    - usage patterns
+    - read/write offsets
+  - enclave内部线程的操作被序列化，不能并行
+  - 处理器（ACPI）S3/S4的state transition会把enclave搞没，cache也没了
+  - 不能防止attacker把replay整个disk
+    - user不持有对整个文件系统的hash/MAC
+    - 只要持有metadata的hash/MAC即可
+      - 因为fs任何一级的改动都会反应到metadata的变化
+      - 在SGX SDK中这个mac是明文存放的
+  - block使用的key跟user的kdk（或者auto key）没关系
+    - 不过这也无所谓，毕竟这些key总会在加密文件中
+- ideas
+  - 在分配这件事上做一些随机，减轻pattern的泄漏
+    - 但要平衡性能和空间开销
+  - 引入recovery file或者logging解决容灾问题
+
+
+
 ### References
 
 - Intel SDM Volume 3d （原SGX Programming Reference） 
