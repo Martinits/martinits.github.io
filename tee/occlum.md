@@ -41,8 +41,54 @@ occlum这个命令是一个bash脚本（tools/occlum），dispatch到不同的�
 
 - SEFS
   - SEFS -> Rust SDK SGX File -> SGX SDK Protected File
+  
   - 2 modes: integrity-only mode and encryption mode
+  
+  - 每个inode的data对应一个host加密文件
+  
+  - 因为基于protected file library，sefs只管理inode及其分配即可
+  
+  - metadata结构
+  
+    - disk = { repeat{ 1个block + free-bitmap + N-2个block } }
+  
+      - 其中第一个group的第一个block是superblock
+  
+      - blocksize = 128B
+  
+      - 一个group的block数量（N）是blocksize*8 = 1024
+  
+    - ```bash
+      +--------------------------------------------------------------------------+
+      |   block0    |  block1  | block2 | .. | blockN | blockN+1 | blockN+2 | .. |
+      | super_block | free_map | INode2 | .. | INodeN | free_map | INodeN+2 | .. |
+      +--------------------------------------------------------------------------+
+      |              Group 0                 |              Group 1              |
+      +--------------------------------------------------------------------------+
+      ```
+  
+    - superblock
+  
+      - magic = 0x2f8d_be2a
+      - block总数
+      - unused block总数
+      - group总数
+  
+    - inode
+  
+      - size、type、permission、entry数量
+      - uid、gid
+      - atime、ctime、mtime
+      - disk_filename：对应host加密文件的名字，就是inode编号的16进制字符串
+      - inode_mac：对应host加密文件头部明文存放的MAC
+  
+    - 高级文件操作
+  
+      - fallocate
+        - 实现方式就是写0，删除一个区间要把后面都copy一遍，不高效
+  
 - UnionFS = SFS(RW, Encryption mode) + SEFS(RO, Integrity mode)
+
 - Async SFS (Optional): Async Rust + Page Cache + JinDisk
 
 #### exception handling
