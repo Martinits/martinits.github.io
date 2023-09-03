@@ -11,6 +11,7 @@
 ## Architecture
 
 - [Intel SDM Reading](arch/intel-sdm.md)
+- [x86](arch/x86.md)
 
 ## Virtualization
 
