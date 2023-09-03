@@ -6,6 +6,7 @@
 - [neovim](cheatsheet/neovim.md)
 - [sysadmin](cheatsheet/sysadmin.md)
 - [system-programming](cheatsheet/system-programming.md)
+- [git](cheatsheet/git.md)
 
 ## Architecture
 
