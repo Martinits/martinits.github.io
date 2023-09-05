@@ -48,8 +48,6 @@
 |                                                              |                               |                                  | work                                                         |
 |                                                              |                               |                                  | 擦出寄存器状态等机密信息，做EEXIT，给出enclave外的目标地址（EENTER的时候CPU会把EENTER指令的下一个指令的地址放在rcx中，enclave保存好这个信息即可）。EEXIT的原因可以是ecall结束自然退出，也可以是OCALL。 |
 
-#### Runtime Modification
-
 #### Async Enclave Exit（AEX）
 
 - SGX exception handling
@@ -89,7 +87,82 @@
 
 #### Attestation
 
-#### Die
+- attestation主要涉及两个寄存器：MRENCLAVE度量enclave的内容和构建过程，MRSIGNER度量给SIGSTRUCT签名的人
+  - MRENCLAVE
+    - SHA256
+    - 由ECREATE创建，EADD和EEXTEND更新，EINIT确定最终值
+  - MRSIGNER
+    - 给enclave签名的3072bit RSA key的SHA256，签名在SIGSTRUCT中
+    - 同一个signer有多个enclave时，可以省去一系列MRENCLAVE
+    - 用于key derivation，可以让同一个signer的多个enclave获取相同derived keys
+    - 结合ISVSVN，可以让某一个版本的enclave获取旧版本的key而无法获取新版本的key
+- SVN
+  - 意在区分拥有不同安全特性的enclave版本，不是普通的functional version，如果没有安全方面的更新，这个SVN可以不变
+  - 包含在attestation（EREPORT）和key derivation中
+  - SIGSTRUCT中，MRSIGNER+ISEXTPRODID+ISVSVN三元组确定了某个特定enclave产品的一组特定version，他们share相同的安全特性；大部分key跟这个三元组有关
+  - CPUSVN代表了intel认证的，有着特定microcode的特定CPU，EREPORT可以获取CPUSVN
+  - CONFIGIDSVN：如果CONFIGID是一个hash，用于校验enclave获取的secret，那同时可能需要一个version number
+- Keys - EGETKEY
+  - key的生成每个CPU都不一样，植根于CPU硬件key（出厂时设定）
+  - Sealing Key
+    - 可选based on MRENCLAVE or MRSIGNER
+    - 后者基于MRSIGNER+ISEXTPRODID+ISVSVN三元组
+  - Report Key - local attestation
+    - 比如enclave A要对B做LA
+    - A给B发TARGETINFO（公开），包括A自己的身份（MRENCLAVE等）
+    - B做EREPORT（参数是TARGETINFO和一个自定义数据）
+      - EREPORT对B的attributes、measurement和自定义数据（REPORTDATA）生成REPORT
+      - EREPORT生成一个Report Key（该Key只有A在EGETKEY的时候可以获取到），计算REPORT的MAC
+    - B把REPORT发给A（公开）
+    - A做EGETKEY，拿到REPORT Key验证REPORT
+  - EINITTOKEN Key
+    - 只能由Launch Enclave使用，用于计算EINITTOKEN的MAC（在EINIT时被校验）
+  - PROVISIONING Key和PROVISIONING Seal Key
+    - 只能由ATTRIBUTE.PROVISIONKEY=1的enclave使用，这种enclave专门用于提供remote attestation key
+
+
+
+### SGX2.0 Additions
+
+- Flexible Launch Control (FLC)
+  - Launch Control
+    - 在普通enclave做EINIT之前，需要Launch Enclave（SECS.ATTRIBUTES.EINITTOKEN_KEY == 1）为其生成EINITTOKEN，只有LE有权限通过EGETKEY获取EINITTOKEN Key，用于给EINITTOKEN生成MAC
+    - LE启动时没有token，但其MRSIGNER必须和IA32_SGXLEPUBKEYHASH MSR的值一致
+  - 在不支持FLC的平台，任何enclave的签名密钥必须是intel授权过的，才能通过LE的检查
+    - IA32_SGXLEPUBKEYHASH只读
+  - 支持FLC的时候，IA32_SGXLEPUBKEYHASH只要没被BIOS锁死，就可读可写
+    - 这是SGX driver就可以无条件将要启动的enclave的MRSIGNER写到上述MSR中，绕过LE的检查
+- Key Separation and Sharing (KSS)
+  - SIGSTRUCT中多了ISVEXTPRODID和ISVFAMILYID
+  - EGETKEY时基于的元素多了ISVEXTPRODID、ISVFAMILYID、CONFIGID/CONFIGIDSVN
+    - ISVEXTPRODID是可选的，如果不选，可以让同一个signer的不同enclave获取同一个key
+  - 创建enclave时可以给一个32B的CONFIGID，可自定义其功能，主要是为了控制enclave在post-initialization时能获取到哪些secret
+- Runtime Modification
+  - 分配新EPC - EAUG
+    - enclave申请新EPC
+    - kernel做EAUG，map到enclave地址空间
+    - enclave做EACCEPT
+  - 分配新TCS page
+    - 在分配普通EPC（PT_REG）的基础上
+    - enclave请求kernel将EPC变为PT_TCS
+    - kernel做EMODT
+    - enclave做EACCEPT
+  - 移除EPC
+    - enclave请求kernel移除某一page
+    - kernel做EMODT，将EPC类型变为PT_TRIM
+    - kernel做ETRACK，后者invalidate所有相关TLB，发起一个核间中断告诉所有core
+    - enclave做EACCEPT
+    - kernel（可选地）做EREMOVE，将EPC移除enclave
+  - 改变（限制/扩充）EPC的访问权限
+  - 在虚拟化环境下，VMM可以超额申请EPC，方便管理
+
+
+
+### VMX Operations
+
+- VMM和host kernel做好CPUID和相关MSR的虚拟化
+- VMM和host kernel可以把EPC拆成多组分配给guest
+- VMCS中可以设置“enabling ENCLS exiting”，从而接管guest kernel发出的ENCLS操作
 
 
 
@@ -203,3 +276,4 @@
 - https://blog.quarkslab.com/overview-of-intel-sgx-part-1-sgx-internals.html
 - https://blog.quarkslab.com/overview-of-intel-sgx-part-2-sgx-externals.html
 - Kernel source code: arch/x86/kernel/cpu/sgx
+- https://zhuanlan.zhihu.com/p/356674522
