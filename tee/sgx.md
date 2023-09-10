@@ -118,7 +118,7 @@
   - EINITTOKEN Key
     - 只能由Launch Enclave使用，用于计算EINITTOKEN的MAC（在EINIT时被校验）
   - PROVISIONING Key和PROVISIONING Seal Key
-    - 只能由ATTRIBUTE.PROVISIONKEY=1的enclave使用，这种enclave专门用于提供remote attestation key
+    - 只能由ATTRIBUTE.PROVISIONKEY=1的enclave使用，这种enclave专门用于提供remote attestation key，比如Quoting Enclave
 
 
 
