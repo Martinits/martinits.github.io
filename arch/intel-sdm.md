@@ -1,1 +1,46 @@
 ## Intel SDM Reading
+
+### Machine Check Exception
+
+### System Management Mode
+
+- 概述
+  - 设计给firmware使用的，对于OS和app来说是透明的
+  - 由System Management Interrupt（SMI）发起，cpu保存context，进入SMM
+  - SMM的代码（SMI handler）在一个独立的物理地址空间SMRAM执行，其他软件不可访问
+  - SMM中所有应该由OS处理的中断都被禁止
+  - SMM代码处理完毕后，使用RSM指令返回正常状态
+  - SMM使用real-address模式，paging关闭，所以SMM代码的地址空间是4G
+- SMRAM
+  - 进入SMM时自动切换到real mode，paging被关闭，只映射0-4G的物理地址空间
+  - SMRAM默认是SMBASE到SMBASE+64K的一块内存
+  - SMBASE在cpu reset之后是0x30000H
+    - 这个值存放在SMBASE寄存器中
+    - 如果state save area的SMM revision identifier field中的SMBASE relocation bit是1，则SMBASE可以在SMM模式下更改
+    - 通过更改state save area的SMM base field，RSM的时候会读取这个field，写入SMBASE寄存器
+    - firmware必须在系统初始化时依次设定每个logical processor的SMBASE值，不可重叠
+  - SMI handler的code和data存放在SMRAM中，默认在SMBASE+32K的地方，这也是SMI发生后cpu跳转到的地方
+  - SMI发生时的context被cpu保存在SMRAM的尾部
+    - 对于不支持64位的cpu，开始于SMBASE+0xFE00H
+    - 对于支持64位的cpu，开始于SMBASE+0xFC00H
+    - 从SMBASE+0xFFFFH开始，倒着使用
+  - SMRAM最大可以使用4G
+  - SMRAM不仅可以在system memory里，也可以在单独的RAM芯片中，这个看具体硬件设计
+- SMI
+  - 最高权限的中断，不同于正常的中断处理流程
+  - 不可重入，SMM下SMI是关闭的
+  - SMI发生时
+    - cpu会等待发射的所有指令retire，且所有store都结束
+    - cpu会通过sys bus广播SMI已被接受的消息，进入SMM模式
+    - SMM中产生的新的SMI会pending，但最多只pending一个
+  - SMM退出时（RSM指令）
+    - cpu在sys bus上发消息，退出SMM
+- SMI handler
+  - 进入SMM，寄存器被初始化到一个指定的状态
+  - 可以打开paging，或者进入64位模式
+- SMP
+  - 任意一个core都可以响应SMI
+  - 不同的core拥有各自的SMRAM区域，SMRAM可以重叠，但是state save area和data区域不得重叠，code和static data区域可以共用
+- linux kernel
+  - 可以使用SMI_COUNT MSR查看SMI的发生次数
+  - 根据 Intel Chipset Family Platform Controller Hub（PCH），可以使用APM（Advanced Power Management）触发SMI。APM_CNT为I/O端口为0xB2的控制寄存器，向APM_CNT发出out指令可以产生SMI。
