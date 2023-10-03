@@ -2,6 +2,18 @@
 
 ### Machine Check Exception
 
+- RAS系列blog
+
+  - https://zhuanlan.zhihu.com/p/646145842
+
+  - https://zhuanlan.zhihu.com/p/646144959
+
+  - https://zhuanlan.zhihu.com/p/646146159
+
+  - https://zhuanlan.zhihu.com/p/646147120
+
+
+
 ### System Management Mode
 
 - 概述
