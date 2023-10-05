@@ -1,4 +1,4 @@
-## Intel SDM Reading
+## Reading Intel SDM and other Specs
 
 ### Machine Check Exception
 
@@ -11,8 +11,6 @@
   - https://zhuanlan.zhihu.com/p/646146159
 
   - https://zhuanlan.zhihu.com/p/646147120
-
-
 
 ### System Management Mode
 
@@ -56,3 +54,20 @@
 - linux kernel
   - 可以使用SMI_COUNT MSR查看SMI的发生次数
   - 根据 Intel Chipset Family Platform Controller Hub（PCH），可以使用APM（Advanced Power Management）触发SMI。APM_CNT为I/O端口为0xB2的控制寄存器，向APM_CNT发出out指令可以产生SMI。
+
+### Topology Enumeration
+
+- System Topo and Unique APIC ID（Processor ID）
+  - CPUID：0BH用于保持legacy的enumeration
+  - CPUID：1FH包含更多信息，但需要使用新算法，新算法兼容legacy的0BH
+    - 可以表示多种层级的topo（Package、Die、Module、Core、甚至Unknown Level）
+  - 具体的算法感觉没啥意思，就是一些bit的各种表示和操作，没细看
+- Cache Topo
+  - CPUID：04H
+- TLB Topo
+  - CPUID：18H
+
+### Refs
+
+- Intel Software Developer Manual
+- Intel 64 Architecture Processor Topology Enumeration
