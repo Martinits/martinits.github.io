@@ -1,5 +1,22 @@
 ## Reading Intel SDM and other Specs
 
+### User Interrupt（以下简称uIPI）
+
+- 第四代至强新加入了用户态中断这一新特性，可以实现快速IPC，按照Intel的测试，普通经由kernel的IPC一般要几个微秒，而使用uIPI可以降低至几百纳秒
+- CR4寄存器的25位用来做uIPI的使能标志位，UIF
+- uIPI只能在64位模式使用，不能在SGX中使用
+- 对UIRR（User Interrupt Request Register）的访问触发uIPI的识别，改寄存器通过MSR访问
+- uIPI的权级比普通中断低一档
+- 发生时，只会修改RIP和RSP，CPL保持=3（用户态）不变
+- user interrupt posting基本过程
+  - 用户态通过SENDUIPI指令发送uIPI，该指令使用参数index UITT这个表，UITT表的每一项是一个uIPI target，包含中断向量和UPID的地址
+  - UPID中包含IPI的vector，目标CPU的ID，和PIR（是不是很像VMX里的Posted Interrupt Descriptor？）
+  - 另一cpu的local apic接受到这个IPI，如果其中断向量为UINV寄存器的内容，判定为uIPI，否则视为普通中断，正常通过IDT deliver到kernel
+  - cpu自动发送EOI通知LAPIC
+  - cpu将UPID寄存器中的PIR更新到UIRR中
+  - 上述UIRR的write动作出发了cpu对uIPI的处理（跳转到RIP）
+  - UIRET指令——中断返回
+
 ### Machine Check Exception
 
 - RAS系列blog
