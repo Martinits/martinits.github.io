@@ -1,5 +1,18 @@
 ## Reading Intel SDM and other Specs
 
+### APIC
+
+- I/O APIC是在芯片组（chipset）里的（南桥？），虽然文档没有细说，但从图上看是经由PCI总线连接到一个bridge hardware上，后者通过cpu和chipset之间的信道（DMI总线？PCI？）把消息发到sys bus上。故此猜测，I/O APIC的中断到了Root Complex里也都变成MSI了，和PCI一样处理。
+
+  ![apic](./assets/apic.png)
+
+- APIC page
+  - APIC page中的所有内存访问都会被APIC处理
+  - APIC page的访问必须128bit对齐
+  - 修改APIC_BASE_MSR中的对应域可以修改APIC page的base address
+- x2APIC
+  - 可以使用MSR来访问部分APIC寄存器
+
 ### User Interrupt（以下简称uIPI）
 
 - 第四代至强新加入了用户态中断这一新特性，可以实现快速IPC，按照Intel的测试，普通经由kernel的IPC一般要几个微秒，而使用uIPI可以降低至几百纳秒
