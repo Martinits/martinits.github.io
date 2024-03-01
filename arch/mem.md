@@ -39,5 +39,3 @@
       | op1 - atomic RMW | true       | true        | true             |
 
 - Total Store Order / x86
-
-  - 

@@ -68,8 +68,8 @@
         - tcs的oentry在linux-`sgx:sdk/sign_tool/SignTool/manage_metadata.cpp:build_tcs_template`这里设置为`linux-sgx:sdk/trts/linux/trts_pic.S:enclave_entry`
         - 这个动作是sdk的sgx_sign工具完成的，构建出来一个tcs的模板放在输出的enclave.signed.so文件的特定位置
     - 现在到了enclave的入口点，`linux-sgx:sdk/trts/linux/trts_pic.S:enclave_entry`
-      - 调用nsp.cpp:enter_enclave，刚才的rdi是第一个参数
-      - dispatch到trts_handle_exception
+      - 调用trts_nsp.cpp:enter_enclave，刚才的rdi是第一个参数
+      - dispatch到trts_handle_exception，这是1st phase handler
         - 做一系列安全检查，然后把SSA->GPR（存放了exception时候的现场， 变量名info）保存到enclave的栈上，再把SSA->GPR填充为2nd phase handling的入口：`linux-sgx:sdk/trts/trts_veh.cpp:internal_handle_exception`，rax为栈上保存的info的地址，就成了internal_handle_exception的第一个参数
     - 层层返回到`linux-sgx:sdk/trts/linux/trts_pic.S:enclave_entry`，做EEXIT
   - kernel恢复“现场”，回用户态
@@ -77,13 +77,31 @@
     - 其中rcx存放AEP，是EENTRY/ERESUME的一个参数，位于unstrusted部分
       - `linux-sgx:psw/urts/linux/enter_enclave.S:.Lasync_exit_pointer`
   - 所以AEP其实就是一句ENCLU[ERESUME]，重新回到发生AEX的地方
-    - ERESUME恢复cpu状态时使用的是CSSA-1的SSA Frame，因为AEX时候已经+1
+    - ERESUME恢复cpu状态时使用的是CSSA-1的SSA Frame，因为AEX时候已经+1，并将CSSA减1
   - 这时重新回到enclave，SSA->GPR的状态已经改成了`linux-sgx:sdk/trts/trts_veh.cpp:internal_handle_exception`
     - 第一个参数是1st phase handling时保存在栈上的info的地址
     - 遍历custom handler：`linux-sgx:sdk/trts/trts_veh.cpp:g_first_node`
       - 逐一调用handler，参数为info
     - handle之后到`linux-sgx:sdk/trts/linux/trts_pic.S:continue_execution`，参数为info
       - 恢复info保存的现场，真正回到exception发生的地方
+- AEX-Notify
+  - Intel论文：AEX-Notify: Thwarting Precise Single-Stepping Attacks through Interrupt Awareness for Intel SGX Enclaves
+  - 使得enclave可以被通知AEX的产生，内部处理exception，而不是交给untrusted部分处理（当然一个善意的untrusted部分允许enclave注册handler，这时会ecall进enclave来处理，如前文所述）
+  - 这可以有效防范single-step引起的攻击
+  - 涉及一个新指令EDECCSSA，并修改ERESUME的行为
+  - AEX-Notify特性的开关
+    - 每个TCS中有一个bit
+    - 每个SSA中有一个bit，从而细粒度控制每一个handler的行为
+  - 和前文所述的普通AEX handling过程的主要区别在于：
+    - SGX SDK的exception handler：`linux-sgx:psw/urts/linux/sig_handler.cpp:sig_handler`直接ERESUME，不再ecall
+    - ERESUME检测到CSSA-1（因为AEX时CSSA已经加1）的SSA开启了AEX-Notify，则其行为与EENTER一致，不会将CSSA减1
+    - 这时的CSSA是一个空的，是默认值，enclave会从TCS模板中的默认入口enclave_entry开始执行
+      - 到`linux-sgx:sdk/trts/linux/trts_nsp.cpp:enter_enclave`，检测到CSSA已经加1（实际上就是1），则调用trts_handle_exception
+      - trts_handle_exception（1st phase handler）检测到AEX-Notify开启，就不做EEXIT了，调用一段汇编`second_phase`
+        - 这段汇编做EDECCSSA，然后直接跳到`linux-sgx:sdk/trts/trts_veh.cpp:internal_handle_exception`，也就是second phase handler
+        - internal_handle_exception遍历handler，处理exception，做mitigation，恢复执行
+
+
 
 #### Attestation
 
