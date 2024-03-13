@@ -24,6 +24,7 @@
 
 - [route](kernel/route.md)
 - [knowbase](kernel/knowbase.md)
+- [mm](kernel/mm.md)
 
 ## TEE
 
