@@ -26,7 +26,7 @@
       - VMCS中没有打开VPID时的VMX non-root模式
     - 打开VPID功能后，在VMCS中设置current VPID，VM entry会检查此字段为非零
     - 不使用EPT时（包括VMX root模式），TLB的tag为VPID和PCID
-    - 使用EPT时，TLB的tag为VPID、PCID、EPTRTA（EPTP的bit[51:12]），其中linear mapping没有EPTRTA的tag
+    - 使用EPT时，如果使用GVA访存，TLB的tag为VPID、PCID、EPTRTA（EPTP的bit[51:12]）；如果使用GPA访存，TLB的tag为EPTRTA
   - Invalidate TLB
     - INVLPG等独立于VMX的指令，只会清除当前VPID的linear mapping，和任何EPTRTA的当前VPID的combined mapping，无论是否使用EPT
     - EPT violation会清除当前VPID、PCID、EPTRTA的对应地址的guest physical mapping和combined mapping
