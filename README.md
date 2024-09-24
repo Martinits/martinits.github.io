@@ -1,5 +1,7 @@
 # NOTES
 
+- 如果这个页面格式乱掉了，就去[我的Github](https://github.com/martinits/martinits.github.io)读markdown吧，这个渲染总是抽风。。。。。。
+
 ## Cheatsheet
 
 - [linux-user](cheatsheet/linux-user.md)
