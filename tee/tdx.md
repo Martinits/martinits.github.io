@@ -416,7 +416,6 @@
      
             - 也可以强制某个leaf和subleaf引起#VE而不是模拟
      
-
 4. MSR Emulation
 
    - VMM不能直接设置访问MSR时的行为，但是可以在`TDH.MNG.INIT`时配置一小部分MSR的模拟值，目前只有`IA32_ARCH_ CAPABILITIES_CONFIG`。VMM可以通过`TDH.SYS.RD/RDALL`读IA32_ARCH_CAPABILITIES_CONFIG_MASK，这个MSR中的bit表示VMM是否可以配置对应bit
