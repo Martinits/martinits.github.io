@@ -69,29 +69,27 @@
        - 1 ～ NUM_HKID_KEYS：shared
        - `NUM_HKID_KEYS+1` ～ `NUM_HKID_KEYS+NUM_TDX_PRIV_KIDS`：TDX private
        - `NUM_HKID_KEYS`、`NUM_TDX_PRIV_KIDS`这两个数通过MSR `IA32_MKTME_KEYID_PARTITIONING`得到
-   
-   
+
+
       - Host kernel负责HKID的分配和回收
-   
-   
+
+
       - Shared HKID：HKID是HPA的upper bits，PCONFIG指令配置
-   
+
         ![HKID](assets/hkid.png)
-   
-   
+
+
       - Private HKID：host kernel通过`TDH.MNG.KEY.*`配置HKID，TDX module在修改SEPT的时候吧HKID加到HPA的upper bit上
-   
+
         - `TDH.MNG.CREATE`给TD分配HKID
         - `TDH.MNG.KEY.CONFIG`告知TDX module操作硬件给TD配置key
-   
-   
-   
+
       - 回收HKID
         - 保证不在执行任何vcpu相关的SEAMCALL，且目标TD所有vcpu不在运行
         - `TDH.VP.FLUSH` `TDH.MNG.VPFLUSHDONE` flush VMCS和TD的ASID范围的TLB
         - `TDH.PHYMEM.CACHE.WB` flush cache（相当于WBNOINVD指令）
         - `TDH.MNG.KEY.FREEID`释放HKID
-   
+
 3. 内存加密相关的三张表
 
    - Key Encryption Table（KET）：包含KeyID，key，加密模式，这个是TME-MK管理
@@ -107,14 +105,18 @@
      - HKID管理有关的操作要在每一个WBINVD domain的任意一个LP上执行一下，视具体情况执行以上两个操作之一
      - WBINVD domain的enumeration：参考Topology Enumeration spec
 
-5. Host恶意行为的防御
+5. 乱读乱写private/shared内存行为的防御
 
+     - Memory Poison
+       - 一些动作会引起该地址被poison（这个poison会写到内存里去），同时返回全0数据
+       - poison的地址被再次读是不会检查TD ownership和MAC的，直接返回poison内容，或产生MCE；软件应该对这块内存做full line write去除poison
      - 乱读行为
-       - 用private HKID读内存，如果不是TD内存或者MAC校验失败，返回全0数据，引起该地址被poison，poison的地址被再次读是不会检查TD ownership和MAC的，软件应该写一下这块内存去除poison
-       - 非SEAM mode读TD内存，返回全0
-       - 非SEAM mode用private HKID读TD内存，TME应该会拒绝，因为非SEAM mode使用了private range 的HKID，但是返回啥？**TODO**
+       - SEAM mode用private HKID读非TD内存，或者用shared HKID读TD内存，或者MAC校验失败，都会返回全0数据，产生poison
+       - SEAM mode，如果crypto mode没开integrity check或者使用logical mode，这时shared HKID去读TD内存，返回全0，不产生poison或MCE
+       - 非SEAM mode读TD内存（不管用shared还是private HKID），speculative execution时读到全0（毕竟speculative execution没法直接报MCE），speculative execution生效时（或者没有被speculative而直接执行时）会触发MCE，不产生poison
      - 乱写行为
-       - 写内存不check TD ownership：被动防御
+       - 写内存不check TD ownership，属于被动防御，TDX Module或者Guest后面读该内存时会检测到内存被写坏	了
+     - 善意的Host VMM应当在把一块内存从private变成shared之前做full line write，确保清除掉TD Owner bit以及可能的poision
 
 #### TD Private Memory Management
 
@@ -122,9 +124,8 @@
 
    - GPAW execution control决定了shared bit位置，shared bit =`(EPT_Level==5 && GPAW==1) ？ BIT51 : BIT47`
 
-   - **TODO**：不确定关闭MMU时候，访问地址要带shared bit吗？
-     - 猜测：关闭MMU默认都是private，相当于shared bit==0
-
+   - 关闭MMU时候，默认都是private，相当于shared bit==0，guest firmware应当尽快构造页表开启MMU和64bit模式
+   
 2. shared EPT和secure EPT
 
      - Shared EPT和普通EPT的一样，完全由VMM管理
@@ -457,11 +458,12 @@
 
 
 9. MCE
-
-   - **TODO**：Base Spec Chap.16
+   - TDX Module配置TD VMCS，使能MCE，如果TD执行期间产生MCE，TDX Module将TD标记为FATAL，不能再运行，也不会去读MCE原因
+   - VMM应该处理这个MCE，回收TD，通过full line write去除poison memory（如有），如果尝试读poison memory将触发MCE
+   - TDX Module里边产生的MCE会导致当前LP的Unbreakable Shutdown，CPU会全局禁用TDX
 
 10. 其他
-      - TD可能会引起对VMM的DoS攻击，有一些mitigation（Section 11.13）
+      - TD可能会引起对VMM的DoS攻击，有一些mitigation（Base Spec Section 11.13）
 
 #### TD debug and profiling
 
