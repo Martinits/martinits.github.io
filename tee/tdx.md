@@ -474,6 +474,18 @@
    - VMM可以通过SEAMCALL读写TD private内存、修高vcpu寄存器状态
    - debug TD不能迁移
 
+#### Side Channel Attack Mitigations
+
+1. Branch Prediction Side Channel
+   - TDX Module会做好TD之间、TD与非TD之间的Branch Prediction的隔离
+2. Single-Step Attack
+   - TDX Module如果检测到vcpu enter之后很快收到中断（～4000 cycles），就会先让vcpu运行随机的cycles之后再注入中断
+3. EPT Fault and Zero-Step Attack
+   - TDX Module如果检测到同一条指令连续产生超过某一阈值的EPT Fault，就会监控这个GPA，并禁止VCPU Enter，知道VMM在Secure EPT中map这个GPA
+4. 遇到Possible Attack时通知TD
+   - TD可以通过设置TDVPS打开这个特性
+   - 主要是指同一条指令产生过多Secure EPT Fault时候，注入一个#VE（EPT Violation），TD做处理，比如halt这一页
+
 
 
 ### **References**
