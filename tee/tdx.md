@@ -467,7 +467,12 @@
 
 #### TD debug and profiling
 
-#### Guest-Host Communication Interface（GHCI）
+1. On-TD Debugging
+   - CPU的几乎所有debugging feature都能被TD VM使用，例如Single stepping、Hardware breakpoints、INT3、Bus lock detection、DR access detection、TSX debug
+2. Off-TD Debugging
+   - `ATTRIBUTES.DEBUG`设为1，就是debug TD
+   - VMM可以通过SEAMCALL读写TD private内存、修高vcpu寄存器状态
+   - debug TD不能迁移
 
 
 
