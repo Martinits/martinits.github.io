@@ -32,5 +32,11 @@
 
 - [SGX](tee/sgx.md)
 - [TDX](tee/tdx.md)
+  - [TDX源码分析](tee/tdx_impl.md)
+  - [TDX IO Support](tee/tdx_io.md)
+  - [TD Migration](tee/td_mig.md)
+  - [Remote Attestation](tee/tdx_ra.md)
+  - [TD Partitioning](tee/td_partition.md)
+  - [TDVF](tee/tdvf.md)
 - [SEV](tee/sev.md)
 - [Occlum](tee/occlum.md)
