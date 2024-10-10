@@ -31,6 +31,7 @@
 ## TEE
 
 - [SGX](tee/sgx.md)
+  - [Occlum](tee/occlum.md)
 - [TDX](tee/tdx.md)
   - [TDX源码分析](tee/tdx_impl.md)
   - [TDX IO Support](tee/tdx_io.md)
@@ -39,4 +40,3 @@
   - [TD Partitioning](tee/td_partition.md)
   - [TDVF](tee/tdvf.md)
 - [SEV](tee/sev.md)
-- [Occlum](tee/occlum.md)
