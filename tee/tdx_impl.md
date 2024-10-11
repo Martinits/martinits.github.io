@@ -103,13 +103,9 @@
 1. TDX对平台的性能影响
 
    - TDH.SYS.LP.INIT会做全局EPT flush（INVEPT type 2）
-
-   - 给guest分配HKID时会flush cache（TODO：不确定是否是全局flush）
-
-   - 根据linux文档，PAMT会占掉大约1/256的host内存
-
+- 根据linux文档，PAMT会占掉大约1/256的host内存
 2. 和同配置普通VM的性能差距
 
    - cpu方面差距在10%以内（UnixBench，SuperPI）
-   - SWIOTLB引起的IO性能下降并没有想象的那么夸张，vcpu充足或者空闲的时候，SWIOTLB的buffer copy并几乎影响IO性能
+   - SWIOTLB引起的IO性能下降并没有想象的那么夸张，vcpu充足或者空闲的时候，SWIOTLB的buffer copy并几乎不影响IO性能
 
