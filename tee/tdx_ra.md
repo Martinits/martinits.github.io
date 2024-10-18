@@ -26,7 +26,9 @@
      - Report Verification失败的可能原因有：TDX Module做了热升级、CPU microcode更新过、或者TD被迁移过，这些TD都是无感的。解决方案就是让被verify的TD重新生成Report
    - Remote Attestation
      - 被验证的TD把Report发送给同一台机器的Quoting Enclave，QE对Report做Local Attestation，然后用ECDSA 384 key对Report签名形成Quote，接入SGX Attestation Infrastructure
-4. Host Measured Boot
+4. TDX Guest Driver
+   - **TODO**
+5. Host Measured Boot
    - **TODO**
    - ACM
    - Intel TXT
