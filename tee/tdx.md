@@ -75,15 +75,15 @@
 
 
       - Shared HKID：HKID是HPA的upper bits，PCONFIG指令配置
-
+    
         ![HKID](assets/hkid.png)
 
 
       - Private HKID：host kernel通过`TDH.MNG.KEY.*`配置HKID，TDX module在修改SEPT的时候吧HKID加到HPA的upper bit上
-
+    
         - `TDH.MNG.CREATE`给TD分配HKID
         - `TDH.MNG.KEY.CONFIG`告知TDX module操作硬件给TD配置key
-
+    
       - 回收HKID
         - 保证不在执行任何vcpu相关的SEAMCALL，且目标TD所有vcpu不在运行
         - `TDH.VP.FLUSH` `TDH.MNG.VPFLUSHDONE` flush VMCS和TD的ASID范围的TLB
@@ -125,15 +125,17 @@
    - GPAW execution control决定了shared bit位置，shared bit =`(EPT_Level==5 && GPAW==1) ？ BIT51 : BIT47`
 
    - 关闭MMU时候，默认都是private，相当于shared bit==0，guest firmware应当尽快构造页表开启MMU和64bit模式
-   
 2. shared EPT和secure EPT
 
      - Shared EPT和普通EPT的一样，完全由VMM管理
 
      - Secure EPT由TDX Module管理，VMM通过SEAMCALL分配物理页，对EPT entry进行增/删/查
-
 3. Page Accept
-     - 为了安全，guest需要对每一个分配的page进行accept操作
+     - 为了安全，guest需要对每一个动态分配（`TDH.MEM.PAGE.AUG`）的page进行accept操作（`TDG.MEM.PAGE.ACCEPT`）
+     - 这个accept会给这一页写0
+     - Guest需要在accept的时候指出页的大小
+       - 如果guest accept的粒度大于SEPT中的粒度，返回给guest一个MISMATCH的错误，guest可以按照小粒度重试
+       - 如果guest accept的粒度小于SEPT中的粒度，产生EPT violation，并在exit qualification中标明guest accept的粒度，VMM需要做page demote拆成小页
 
 
 4. Private memory的动态管理
