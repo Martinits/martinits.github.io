@@ -92,7 +92,7 @@
    2. Idle
 
       - ACPI S3 or deeper会导致硬件彻底disable TDX，不可恢复，kernel打开TDX需要禁用休眠（nohibernate）
-      - KVM通过`TDH.VP.RD`中的NON_ARCH state获知vcpu当前是否有pending的中断（vmxip bit），从而在vcpu执行`HALT`的时候选择是否返回Guest
+      - KVM通过`TDH.VP.RD`中的NON_ARCH state获知vcpu当前是否有pending的中断（vmxip bit），从而在vcpu执行`HALT`的时候选择是否返回Guest。这个bit实际上就是TDX Module通过比较RVI[7:4]和PPR[7:4]得到的：如果RVI[7:4]大于PPR[7:4]则vmxip=1。
 
    3. 疑难杂症
 
