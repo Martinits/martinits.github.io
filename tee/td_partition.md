@@ -115,3 +115,7 @@
 - **On-L2 Debug**：CPU的debug特性基本上都可以用，由L1控制（前提是Host给L1开了这个特性）
 - **L1 Debug of L2**：L1是L2的TCB成员，所以可以用VMX debug features，只要Host给L1开了这些特性；此外，L1可以查看一些L2 VMCS的内容
 - **Off-TD Debug**：自然延伸至L2，Host可以看L2 private memory
+
+#### SVSM Design
+
+- **TODO**
