@@ -30,23 +30,24 @@
 
 #### Creation
 
-| CPU                                                          | sgx driver inside kernel      | user process                     | enclave                                                      |
-| ------------------------------------------------------------ | ----------------------------- | -------------------------------- | ------------------------------------------------------------ |
-|                                                              |                               | annonymous mmap分配一段内存      |                                                              |
-|                                                              |                               | 打开sgx设备，ioctl(CREATE)       |                                                              |
-|                                                              | ECREATE                       |                                  |                                                              |
-|                                                              |                               | 通过ioctl把enclave每一页load进去 |                                                              |
-|                                                              | EADD：分配EPC并copy每一页内容 |                                  |                                                              |
-| 更新EPCM，标注EPC类型（PT_REG/PT_TCS），记录linear地址和EPC物理地址 |                               |                                  |                                                              |
-|                                                              | 对每256B的内存做EEXTEND       |                                  |                                                              |
-| 更新enclave的crypto状态（crypto log）                        |                               |                                  |                                                              |
-|                                                              |                               | ioctl发起EINIT                   |                                                              |
-|                                                              | 做EINIT                       |                                  |                                                              |
-| 确定enclave的crypto log，建立enclave identity和sealing identity（EGETKEY和EREPORT会使用），构建过程的hash存放在enclave identity中，也就是MRENCLAVE；检查enclave token（Launch Control情况下是由Launch Enclave生成的） |                               |                                  |                                                              |
-|                                                              |                               | EENTER                           |                                                              |
-| 保存旧的RSP、RBP，将TCS设为busy状态（不能被EENTER等指令使用），跳转到TCS包含的位置 |                               |                                  |                                                              |
-|                                                              |                               |                                  | work                                                         |
-|                                                              |                               |                                  | 擦出寄存器状态等机密信息，做EEXIT，给出enclave外的目标地址（EENTER的时候CPU会把EENTER指令的下一个指令的地址放在rcx中，enclave保存好这个信息即可）。EEXIT的原因可以是ecall结束自然退出，也可以是OCALL。 |
+| CPU                                                          | sgx driver inside kernel      | user process                                     | enclave                                                      |
+| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------ | ------------------------------------------------------------ |
+|                                                              |                               | anonymous mmap分配一段VMA                        |                                                              |
+|                                                              |                               | 打开sgx设备，ioctl(CREATE)                       |                                                              |
+|                                                              | ECREATE                       |                                                  |                                                              |
+|                                                              |                               | 通过ioctl把enclave每一页load进去                 |                                                              |
+|                                                              | EADD：分配EPC并copy每一页内容 |                                                  |                                                              |
+| 更新EPCM，标注EPC类型（PT_REG/PT_TCS），记录linear地址和EPC物理地址 |                               |                                                  |                                                              |
+|                                                              | 对每256B的内存做EEXTEND       |                                                  |                                                              |
+| 更新enclave的crypto状态（crypto log）                        |                               |                                                  |                                                              |
+|                                                              |                               | 使用设备fd mmap对应enclave section的起始VA和size |                                                              |
+|                                                              |                               | ioctl发起EINIT                                   |                                                              |
+|                                                              | 做EINIT                       |                                                  |                                                              |
+| 确定enclave的crypto log，建立enclave identity和sealing identity（EGETKEY和EREPORT会使用），构建过程的hash存放在enclave identity中，也就是MRENCLAVE；检查enclave token（Launch Control情况下是由Launch Enclave生成的） |                               |                                                  |                                                              |
+|                                                              |                               | EENTER                                           |                                                              |
+| 保存旧的RSP、RBP，将TCS设为busy状态（不能被EENTER等指令使用），跳转到TCS包含的位置 |                               |                                                  |                                                              |
+|                                                              |                               |                                                  | work                                                         |
+|                                                              |                               |                                                  | 擦出寄存器状态等机密信息，做EEXIT，给出enclave外的目标地址（EENTER的时候CPU会把EENTER指令的下一个指令的地址放在rcx中，enclave保存好这个信息即可）。EEXIT的原因可以是ecall结束自然退出，也可以是OCALL。 |
 
 #### Async Enclave Exit（AEX）
 
