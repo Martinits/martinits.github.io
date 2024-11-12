@@ -26,6 +26,7 @@
 
 - [route](kernel/route.md)
 - [knowbase](kernel/knowbase.md)
+- [intr](kernel/intr.md)
 - [mm](kernel/mm.md)
 - [io](kernel/io.md)
 

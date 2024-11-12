@@ -51,7 +51,7 @@
 
 #### Async Enclave Exit（AEX）
 
-- SGX exception handling
+- SGX exception handling（传统的基于信号的方法）
   - 比如：enclave里边syscall/sysenter触发#UD，这是一个AEX
   - AEX发生后，cpu保存好现场，伪造一个“假的”现场（synthetic state），保护enclave状态
     - 同时CSSA加1：移动到下一个空的SSA Frame
@@ -85,6 +85,19 @@
       - 逐一调用handler，参数为info
     - handle之后到`linux-sgx:sdk/trts/linux/trts_pic.S:continue_execution`，参数为info
       - 恢复info保存的现场，真正回到exception发生的地方
+- SGX exception handling（新的基于vdso的方法）
+  - 此方法避免了复杂的signal处理流程，从vdso直接回到用户态的handler，这依赖于vdso对exception fixup的支持，后者类似于kernel exception fixup功能，这些基础知识请先看[Kernel Exception Fixup](../kernel/intr.md#kernel-exception-fixup)
+  - 还是那个场景：enclave里边syscall/sysenter触发#UD，进kernel
+  - 首先，vdso中包装了一套EENTER和ERESUME的逻辑，SGX SDK需要调用vdso的这套包装来进入enclave。SDK的untrusted部分（函数名：`vdso_detector`）先去检测vdso中是否存在`__vdso_sgx_enter_enclave`这个symbol（使用glibc的`getauxval`功能），如果存在则使用vdso方式进入enclave。
+  - 另外，SGX SDK也不再需要注册signal handler。
+  - kernel处理#UD的调用链变为：
+    - `exc_invalid_op` -> `handle_invalid_op` -> `do_error_trap` -> `do_trap` 
+    - `do_trap`会先尝试不用信号处理这个exception：`do_trap_no_signal` -> `fixup_vdso_exception`，这个函数查找当前进程的vsdo image中的extable，找到fault地址的对应fixup地址，把pt_regs中的rip替换成fixup地址，在对应寄存器设置好fault信息（fault地址、error code等）。
+    - 后续kernel trap的通用流程中就会在设置好的这个fixup handler处继续用户态执行，实现用户态，也就是enclave的exception fixup
+
+  - 那么显然这个fixup handler就应当是exception handler的入口了，它在哪里，又是怎么注册给vdso的呢？
+    - `do_ecall`中，通过一个寄存器传参的约定（注：并不符合x86 ABI）向`__vdso_sgx_enter_enclave`传递`struct sgx_enclave_run`，这里包含了各种EENTER的参数。其中的`user_handler`就是用户态的exception handler，即`sgx_urts_vdso_handler`，这个函数会做ecall（通过vdso）进入enclave进行two-phase exception handling（如前文所述）。
+
 - AEX-Notify
   - Intel论文：AEX-Notify: Thwarting Precise Single-Stepping Attacks through Interrupt Awareness for Intel SGX Enclaves
   - 使得enclave可以被通知AEX的产生，内部处理exception，而不是交给untrusted部分处理（当然一个善意的untrusted部分允许enclave注册handler，这时会ecall进enclave来处理，如前文所述）
