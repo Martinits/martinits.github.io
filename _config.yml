@@ -1,5 +1,5 @@
-title: NOTES
-description: Personal scratchpad in computer science
+title: CS NOTES
+description: 当备忘录用的哈哈 凑合看各位
 remote_theme: pages-themes/cayman@v0.2.0
 plugins:
   - jekyll-remote-theme
