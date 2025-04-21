@@ -47,8 +47,6 @@
 
    - 在In-Order阶段，一个Stream中的export和import是必须串行化的，也就是import顺序必须和export顺序相同
 
-   - 在In-Order阶段，对于同一个页，新版本的import必须发生在旧版本import之前
-
    - In-Order阶段迁移过的页在此阶段结束前必须迁移为最新版本，即最新版本的import必须在Out-Of-Order阶段开始之前完成
 
    - In-Order阶段分成很多epoch，同一个页在一个epoch里边只能迁移一次
