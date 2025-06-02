@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/147433196" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 块设备虚拟化（21）-CSDN博客
+     </title>
+     <meta content="QEMU源码全解析 —— 块设备虚拟化（21）" name="keywords"/>
+     <meta content="文章浏览阅读143次。QEMU源码全解析 —— 块设备虚拟化（21）" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-72afa20676.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 块设备虚拟化（21）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2025-04-23 23:58:00 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量143
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like" data-type="top">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2025-04-22 23:38:11 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/147433196" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/147433196
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="" id="blogHuaweiyunAdvert">
+        </div>
+        <div class="" id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             172 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views atom-one-light" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/147376064" title="QEMU源码全解析 —— 块设备虚拟化（20）">
+             QEMU源码全解析 —— 块设备虚拟化（20）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h3>
+            QEMU启动过程中的块设备虚拟化
+           </h3>
+           <p>
+            上一回开始解析blockdev_init函数，讲到了其中调用的blk_new_open函数，该函数的作用是打开宿主机上的硬盘文件。blk_new_open函数中又调用bdrv_open函数，其在block.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">/* The caller must always hold the main AioContext lock. */
+BlockDriverState *bdrv_open(const char *filename, const char *reference,
+                            QDict *options, int flags, Error **errp)
+{
+    GLOBAL_STATE_CODE();
+ 
+    return bdrv_open_inherit(filename, reference, options, flags, NULL,
+                             NULL, 0, errp);
+}</code></pre>
+           <p>
+            bdrv_open_inherit函数也在block.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">/*
+ * Opens a disk image (raw, qcow2, vmdk, ...)
+ *
+ * options is a QDict of options to pass to the block drivers, or NULL for an
+ * empty set of options. The reference to the QDict belongs to the block layer
+ * after the call (even on failure), so if the caller intends to reuse the
+ * dictionary, it needs to use qobject_ref() before calling bdrv_open.
+ *
+ * If *pbs is NULL, a new BDS will be created with a pointer to it stored there.
+ * If it is not NULL, the referenced BDS will be reused.
+ *
+ * The reference parameter may be used to specify an existing block device which
+ * should be opened. If specified, neither options nor a filename may be given,
+ * nor can an existing BDS be reused (that is, *pbs has to be NULL).
+ *
+ * The caller must always hold the main AioContext lock.
+ */
+static BlockDriverState * no_coroutine_fn
+bdrv_open_inherit(const char *filename, const char *reference, QDict *options,
+                  int flags, BlockDriverState *parent,
+                  const BdrvChildClass *child_class, BdrvChildRole child_role,
+                  Error **errp)
+{
+    int ret;
+    BlockBackend *file = NULL;
+    BlockDriverState *bs;
+    BlockDriver *drv = NULL;
+    BdrvChild *child;
+    const char *drvname;
+    const char *backing;
+    Error *local_err = NULL;
+    QDict *snapshot_options = NULL;
+    int snapshot_flags = 0;
+    AioContext *ctx = qemu_get_aio_context();
+
+    assert(!child_class || !flags);
+    assert(!child_class == !parent);
+    GLOBAL_STATE_CODE();
+    assert(!qemu_in_coroutine());
+
+    if (reference) {
+        bool options_non_empty = options ? qdict_size(options) : false;
+        qobject_unref(options);
+
+        if (filename || options_non_empty) {
+            error_setg(errp, "Cannot reference an existing block device with "
+                       "additional options or a new filename");
+            return NULL;
+        }
+
+        bs = bdrv_lookup_bs(reference, reference, errp);
+        if (!bs) {
+            return NULL;
+        }
+
+        bdrv_ref(bs);
+        return bs;
+    }
+
+    bs = bdrv_new();
+
+    /* NULL means an empty set of options */
+    if (options == NULL) {
+        options = qdict_new();
+    }
+
+    /* json: syntax counts as explicit options, as if in the QDict */
+    parse_json_protocol(options, &amp;filename, &amp;local_err);
+    if (local_err) {
+        goto fail;
+    }
+
+    bs-&gt;explicit_options = qdict_clone_shallow(options);
+
+    if (child_class) {
+        bool parent_is_format;
+
+        if (parent-&gt;drv) {
+            parent_is_format = parent-&gt;drv-&gt;is_format;
+        } else {
+            /*
+             * parent-&gt;drv is not set yet because this node is opened for
+             * (potential) format probing.  That means that @parent is going
+             * to be a format node.
+             */
+            parent_is_format = true;
+        }
+
+        bs-&gt;inherits_from = parent;
+        child_class-&gt;inherit_options(child_role, parent_is_format,
+                                     &amp;flags, options,
+                                     parent-&gt;open_flags, parent-&gt;options);
+    }
+
+    ret = bdrv_fill_options(&amp;options, filename, &amp;flags, &amp;local_err);
+    if (ret &lt; 0) {
+        goto fail;
+    }
+
+    /*
+     * Set the BDRV_O_RDWR and BDRV_O_ALLOW_RDWR flags.
+     * Caution: getting a boolean member of @options requires care.
+     * When @options come from -blockdev or blockdev_add, members are
+     * typed according to the QAPI schema, but when they come from
+     * -drive, they're all QString.
+     */
+    if (g_strcmp0(qdict_get_try_str(options, BDRV_OPT_READ_ONLY), "on") &amp;&amp;
+        !qdict_get_try_bool(options, BDRV_OPT_READ_ONLY, false)) {
+        flags |= (BDRV_O_RDWR | BDRV_O_ALLOW_RDWR);
+    } else {
+        flags &amp;= ~BDRV_O_RDWR;
+    }
+
+    if (flags &amp; BDRV_O_SNAPSHOT) {
+        snapshot_options = qdict_new();
+        bdrv_temp_snapshot_options(&amp;snapshot_flags, snapshot_options,
+                                   flags, options);
+        /* Let bdrv_backing_options() override "read-only" */
+        qdict_del(options, BDRV_OPT_READ_ONLY);
+        bdrv_inherited_options(BDRV_CHILD_COW, true,
+                               &amp;flags, options, flags, options);
+    }
+
+    bs-&gt;open_flags = flags;
+    bs-&gt;options = options;
+    options = qdict_clone_shallow(options);
+
+    /* Find the right image format driver */
+    /* See cautionary note on accessing @options above */
+    drvname = qdict_get_try_str(options, "driver");
+    if (drvname) {
+        drv = bdrv_find_format(drvname);
+        if (!drv) {
+            error_setg(errp, "Unknown driver: '%s'", drvname);
+            goto fail;
+        }
+    }
+
+    assert(drvname || !(flags &amp; BDRV_O_PROTOCOL));
+
+    /* See cautionary note on accessing @options above */
+    backing = qdict_get_try_str(options, "backing");
+    if (qobject_to(QNull, qdict_get(options, "backing")) != NULL ||
+        (backing &amp;&amp; *backing == '\0'))
+    {
+        if (backing) {
+            warn_report("Use of \"backing\": \"\" is deprecated; "
+                        "use \"backing\": null instead");
+        }
+        flags |= BDRV_O_NO_BACKING;
+        qdict_del(bs-&gt;explicit_options, "backing");
+        qdict_del(bs-&gt;options, "backing");
+        qdict_del(options, "backing");
+    }
+
+    /* Open image file without format layer. This BlockBackend is only used for
+     * probing, the block drivers will do their own bdrv_open_child() for the
+     * same BDS, which is why we put the node name back into options. */
+    if ((flags &amp; BDRV_O_PROTOCOL) == 0) {
+        BlockDriverState *file_bs;
+
+        file_bs = bdrv_open_child_bs(filename, options, "file", bs,
+                                     &amp;child_of_bds, BDRV_CHILD_IMAGE,
+                                     true, &amp;local_err);
+        if (local_err) {
+            goto fail;
+        }
+        if (file_bs != NULL) {
+            /* Not requesting BLK_PERM_CONSISTENT_READ because we're only
+             * looking at the header to guess the image format. This works even
+             * in cases where a guest would not see a consistent state. */
+            ctx = bdrv_get_aio_context(file_bs);
+            aio_context_acquire(ctx);
+            file = blk_new(ctx, 0, BLK_PERM_ALL);
+            blk_insert_bs(file, file_bs, &amp;local_err);
+            bdrv_unref(file_bs);
+            aio_context_release(ctx);
+
+            if (local_err) {
+                goto fail;
+            }
+
+            qdict_put_str(options, "file", bdrv_get_node_name(file_bs));
+        }
+    }
+
+    /* Image format probing */
+    bs-&gt;probed = !drv;
+    if (!drv &amp;&amp; file) {
+        ret = find_image_format(file, filename, &amp;drv, &amp;local_err);
+        if (ret &lt; 0) {
+            goto fail;
+        }
+        /*
+         * This option update would logically belong in bdrv_fill_options(),
+         * but we first need to open bs-&gt;file for the probing to work, while
+         * opening bs-&gt;file already requires the (mostly) final set of options
+         * so that cache mode etc. can be inherited.
+         *
+         * Adding the driver later is somewhat ugly, but it's not an option
+         * that would ever be inherited, so it's correct. We just need to make
+         * sure to update both bs-&gt;options (which has the full effective
+         * options for bs) and options (which has file.* already removed).
+         */
+        qdict_put_str(bs-&gt;options, "driver", drv-&gt;format_name);
+        qdict_put_str(options, "driver", drv-&gt;format_name);
+    } else if (!drv) {
+        error_setg(errp, "Must specify either driver or file");
+        goto fail;
+    }
+
+    /* BDRV_O_PROTOCOL must be set iff a protocol BDS is about to be created */
+    assert(!!(flags &amp; BDRV_O_PROTOCOL) == !!drv-&gt;bdrv_file_open);
+    /* file must be NULL if a protocol BDS is about to be created
+     * (the inverse results in an error message from bdrv_open_common()) */
+    assert(!(flags &amp; BDRV_O_PROTOCOL) || !file);
+
+    /* Open the image */
+    ret = bdrv_open_common(bs, file, options, &amp;local_err);
+    if (ret &lt; 0) {
+        goto fail;
+    }
+
+    /* The AioContext could have changed during bdrv_open_common() */
+    ctx = bdrv_get_aio_context(bs);
+
+    if (file) {
+        aio_context_acquire(ctx);
+        blk_unref(file);
+        aio_context_release(ctx);
+        file = NULL;
+    }
+
+    /* If there is a backing file, use it */
+    if ((flags &amp; BDRV_O_NO_BACKING) == 0) {
+        ret = bdrv_open_backing_file(bs, options, "backing", &amp;local_err);
+        if (ret &lt; 0) {
+            goto close_and_fail;
+        }
+    }
+
+    /* Remove all children options and references
+     * from bs-&gt;options and bs-&gt;explicit_options */
+    QLIST_FOREACH(child, &amp;bs-&gt;children, next) {
+        char *child_key_dot;
+        child_key_dot = g_strdup_printf("%s.", child-&gt;name);
+        qdict_extract_subqdict(bs-&gt;explicit_options, NULL, child_key_dot);
+        qdict_extract_subqdict(bs-&gt;options, NULL, child_key_dot);
+        qdict_del(bs-&gt;explicit_options, child-&gt;name);
+        qdict_del(bs-&gt;options, child-&gt;name);
+        g_free(child_key_dot);
+    }
+
+    /* Check if any unknown options were used */
+    if (qdict_size(options) != 0) {
+        const QDictEntry *entry = qdict_first(options);
+        if (flags &amp; BDRV_O_PROTOCOL) {
+            error_setg(errp, "Block protocol '%s' doesn't support the option "
+                       "'%s'", drv-&gt;format_name, entry-&gt;key);
+        } else {
+            error_setg(errp,
+                       "Block format '%s' does not support the option '%s'",
+                       drv-&gt;format_name, entry-&gt;key);
+        }
+
+        goto close_and_fail;
+    }
+
+    bdrv_parent_cb_change_media(bs, true);
+
+    qobject_unref(options);
+    options = NULL;
+
+    /* For snapshot=on, create a temporary qcow2 overlay. bs points to the
+     * temporary snapshot afterwards. */
+    if (snapshot_flags) {
+        BlockDriverState *snapshot_bs;
+        snapshot_bs = bdrv_append_temp_snapshot(bs, snapshot_flags,
+                                                snapshot_options, &amp;local_err);
+        snapshot_options = NULL;
+        if (local_err) {
+            goto close_and_fail;
+        }
+        /* We are not going to return bs but the overlay on top of it
+         * (snapshot_bs); thus, we have to drop the strong reference to bs
+         * (which we obtained by calling bdrv_new()). bs will not be deleted,
+         * though, because the overlay still has a reference to it. */
+        aio_context_acquire(ctx);
+        bdrv_unref(bs);
+        aio_context_release(ctx);
+        bs = snapshot_bs;
+    }
+
+    return bs;
+
+fail:
+    aio_context_acquire(ctx);
+    blk_unref(file);
+    qobject_unref(snapshot_options);
+    qobject_unref(bs-&gt;explicit_options);
+    qobject_unref(bs-&gt;options);
+    qobject_unref(options);
+    bs-&gt;options = NULL;
+    bs-&gt;explicit_options = NULL;
+    bdrv_unref(bs);
+    aio_context_release(ctx);
+    error_propagate(errp, local_err);
+    return NULL;
+
+close_and_fail:
+    aio_context_acquire(ctx);
+    bdrv_unref(bs);
+    aio_context_release(ctx);
+    qobject_unref(snapshot_options);
+    qobject_unref(options);
+    error_propagate(errp, local_err);
+    return NULL;
+}
+</code></pre>
+           <p>
+            bdrv_open_inherit函数的作用是打开磁盘映像（raw、qcow2、vmdk等格式）。其中最为核心的一段是：
+           </p>
+           <pre><code class="language-cpp">    /* Open the image */
+    ret = bdrv_open_common(bs, file, options, &amp;local_err);
+    if (ret &lt; 0) {
+        goto fail;
+    }</code></pre>
+           <p>
+            bdrv_open_common函数也在block.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">/*
+ * Common part for opening disk images and files
+ *
+ * Removes all processed options from *options.
+ */
+static int bdrv_open_common(BlockDriverState *bs, BlockBackend *file,
+                            QDict *options, Error **errp)
+{
+    int ret, open_flags;
+    const char *filename;
+    const char *driver_name = NULL;
+    const char *node_name = NULL;
+    const char *discard;
+    QemuOpts *opts;
+    BlockDriver *drv;
+    Error *local_err = NULL;
+    bool ro;
+
+    assert(bs-&gt;file == NULL);
+    assert(options != NULL &amp;&amp; bs-&gt;options != options);
+    GLOBAL_STATE_CODE();
+
+    opts = qemu_opts_create(&amp;bdrv_runtime_opts, NULL, 0, &amp;error_abort);
+    if (!qemu_opts_absorb_qdict(opts, options, errp)) {
+        ret = -EINVAL;
+        goto fail_opts;
+    }
+
+    update_flags_from_options(&amp;bs-&gt;open_flags, opts);
+
+    driver_name = qemu_opt_get(opts, "driver");
+    drv = bdrv_find_format(driver_name);
+    assert(drv != NULL);
+
+    bs-&gt;force_share = qemu_opt_get_bool(opts, BDRV_OPT_FORCE_SHARE, false);
+
+    if (bs-&gt;force_share &amp;&amp; (bs-&gt;open_flags &amp; BDRV_O_RDWR)) {
+        error_setg(errp,
+                   BDRV_OPT_FORCE_SHARE
+                   "=on can only be used with read-only images");
+        ret = -EINVAL;
+        goto fail_opts;
+    }
+
+    if (file != NULL) {
+        bdrv_refresh_filename(blk_bs(file));
+        filename = blk_bs(file)-&gt;filename;
+    } else {
+        /*
+         * Caution: while qdict_get_try_str() is fine, getting
+         * non-string types would require more care.  When @options
+         * come from -blockdev or blockdev_add, its members are typed
+         * according to the QAPI schema, but when they come from
+         * -drive, they're all QString.
+         */
+        filename = qdict_get_try_str(options, "filename");
+    }
+
+    if (drv-&gt;bdrv_needs_filename &amp;&amp; (!filename || !filename[0])) {
+        error_setg(errp, "The '%s' block driver requires a file name",
+                   drv-&gt;format_name);
+        ret = -EINVAL;
+        goto fail_opts;
+    }
+
+    trace_bdrv_open_common(bs, filename ?: "", bs-&gt;open_flags,
+                           drv-&gt;format_name);
+
+    ro = bdrv_is_read_only(bs);
+
+    if (use_bdrv_whitelist &amp;&amp; !bdrv_is_whitelisted(drv, ro)) {
+        if (!ro &amp;&amp; bdrv_is_whitelisted(drv, true)) {
+            ret = bdrv_apply_auto_read_only(bs, NULL, NULL);
+        } else {
+            ret = -ENOTSUP;
+        }
+        if (ret &lt; 0) {
+            error_setg(errp,
+                       !ro &amp;&amp; bdrv_is_whitelisted(drv, true)
+                       ? "Driver '%s' can only be used for read-only devices"
+                       : "Driver '%s' is not whitelisted",
+                       drv-&gt;format_name);
+            goto fail_opts;
+        }
+    }
+
+    /* bdrv_new() and bdrv_close() make it so */
+    assert(qatomic_read(&amp;bs-&gt;copy_on_read) == 0);
+
+    if (bs-&gt;open_flags &amp; BDRV_O_COPY_ON_READ) {
+        if (!ro) {
+            bdrv_enable_copy_on_read(bs);
+        } else {
+            error_setg(errp, "Can't use copy-on-read on read-only device");
+            ret = -EINVAL;
+            goto fail_opts;
+        }
+    }
+
+    discard = qemu_opt_get(opts, BDRV_OPT_DISCARD);
+    if (discard != NULL) {
+        if (bdrv_parse_discard_flags(discard, &amp;bs-&gt;open_flags) != 0) {
+            error_setg(errp, "Invalid discard option");
+            ret = -EINVAL;
+            goto fail_opts;
+        }
+    }
+
+    bs-&gt;detect_zeroes =
+        bdrv_parse_detect_zeroes(opts, bs-&gt;open_flags, &amp;local_err);
+    if (local_err) {
+        error_propagate(errp, local_err);
+        ret = -EINVAL;
+        goto fail_opts;
+    }
+
+    if (filename != NULL) {
+        pstrcpy(bs-&gt;filename, sizeof(bs-&gt;filename), filename);
+    } else {
+        bs-&gt;filename[0] = '\0';
+    }
+    pstrcpy(bs-&gt;exact_filename, sizeof(bs-&gt;exact_filename), bs-&gt;filename);
+
+    /* Open the image, either directly or using a protocol */
+    open_flags = bdrv_open_flags(bs, bs-&gt;open_flags);
+    node_name = qemu_opt_get(opts, "node-name");
+
+    assert(!drv-&gt;bdrv_file_open || file == NULL);
+    ret = bdrv_open_driver(bs, drv, node_name, options, open_flags, errp);
+    if (ret &lt; 0) {
+        goto fail_opts;
+    }
+
+    qemu_opts_del(opts);
+    return 0;
+
+fail_opts:
+    qemu_opts_del(opts);
+    return ret;
+}</code></pre>
+           <p>
+            在bdrv_open_common函数中，根据磁盘文件的格式，得到BlockDriver *drv。代码片段如下：
+           </p>
+           <pre><code class="language-cpp">static int bdrv_open_common(BlockDriverState *bs, BlockBackend *file,
+                            QDict *options, Error **errp)
+{
+    int ret, open_flags;
+    const char *filename;
+    const char *driver_name = NULL;
+    const char *node_name = NULL;
+    const char *discard;
+    QemuOpts *opts;
+    BlockDriver *drv;
+    Error *local_err = NULL;
+    bool ro;
+    ……
+
+    driver_name = qemu_opt_get(opts, "driver");
+    drv = bdrv_find_format(driver_name);
+    assert(drv != NULL);
+    ……
+}
+</code></pre>
+           <p>
+            然后再调用bdrv_open_driver函数，根据得到的BlockDriver *drv，打开磁盘文件。代码片段如下：
+           </p>
+           <pre><code class="language-cpp">    assert(!drv-&gt;bdrv_file_open || file == NULL);
+    ret = bdrv_open_driver(bs, drv, node_name, options, open_flags, errp);
+    if (ret &lt; 0) {
+        goto fail_opts;
+    }</code></pre>
+           <p>
+            bdrv_open_driver函数也在block中，代码如下：
+           </p>
+           <pre><code class="language-cpp">/*
+ * The caller must always hold @bs AioContext lock, because this function calls
+ * bdrv_refresh_total_sectors() which polls when called from non-coroutine
+ * context.
+ */
+static int no_coroutine_fn GRAPH_UNLOCKED
+bdrv_open_driver(BlockDriverState *bs, BlockDriver *drv, const char *node_name,
+                 QDict *options, int open_flags, Error **errp)
+{
+    AioContext *ctx;
+    Error *local_err = NULL;
+    int i, ret;
+    GLOBAL_STATE_CODE();
+
+    bdrv_assign_node_name(bs, node_name, &amp;local_err);
+    if (local_err) {
+        error_propagate(errp, local_err);
+        return -EINVAL;
+    }
+
+    bs-&gt;drv = drv;
+    bs-&gt;opaque = g_malloc0(drv-&gt;instance_size);
+
+    if (drv-&gt;bdrv_file_open) {
+        assert(!drv-&gt;bdrv_needs_filename || bs-&gt;filename[0]);
+        ret = drv-&gt;bdrv_file_open(bs, options, open_flags, &amp;local_err);
+    } else if (drv-&gt;bdrv_open) {
+        ret = drv-&gt;bdrv_open(bs, options, open_flags, &amp;local_err);
+    } else {
+        ret = 0;
+    }
+
+    if (ret &lt; 0) {
+        if (local_err) {
+            error_propagate(errp, local_err);
+        } else if (bs-&gt;filename[0]) {
+            error_setg_errno(errp, -ret, "Could not open '%s'", bs-&gt;filename);
+        } else {
+            error_setg_errno(errp, -ret, "Could not open image");
+        }
+        goto open_failed;
+    }
+
+    assert(!(bs-&gt;supported_read_flags &amp; ~BDRV_REQ_MASK));
+    assert(!(bs-&gt;supported_write_flags &amp; ~BDRV_REQ_MASK));
+
+    /*
+     * Always allow the BDRV_REQ_REGISTERED_BUF optimization hint. This saves
+     * drivers that pass read/write requests through to a child the trouble of
+     * declaring support explicitly.
+     *
+     * Drivers must not propagate this flag accidentally when they initiate I/O
+     * to a bounce buffer. That case should be rare though.
+     */
+    bs-&gt;supported_read_flags |= BDRV_REQ_REGISTERED_BUF;
+    bs-&gt;supported_write_flags |= BDRV_REQ_REGISTERED_BUF;
+
+    /* Get the context after .bdrv_open, it can change the context */
+    ctx = bdrv_get_aio_context(bs);
+    aio_context_acquire(ctx);
+
+    ret = bdrv_refresh_total_sectors(bs, bs-&gt;total_sectors);
+    if (ret &lt; 0) {
+        error_setg_errno(errp, -ret, "Could not refresh total sector count");
+        aio_context_release(ctx);
+        return ret;
+    }
+
+    bdrv_graph_rdlock_main_loop();
+    bdrv_refresh_limits(bs, NULL, &amp;local_err);
+    bdrv_graph_rdunlock_main_loop();
+    aio_context_release(ctx);
+
+    if (local_err) {
+        error_propagate(errp, local_err);
+        return -EINVAL;
+    }
+
+    assert(bdrv_opt_mem_align(bs) != 0);
+    assert(bdrv_min_mem_align(bs) != 0);
+    assert(is_power_of_2(bs-&gt;bl.request_alignment));
+
+    for (i = 0; i &lt; bs-&gt;quiesce_counter; i++) {
+        if (drv-&gt;bdrv_drain_begin) {
+            drv-&gt;bdrv_drain_begin(bs);
+        }
+    }
+
+    return 0;
+open_failed:
+    bs-&gt;drv = NULL;
+    if (bs-&gt;file != NULL) {
+        bdrv_unref_child(bs, bs-&gt;file);
+        assert(!bs-&gt;file);
+    }
+    g_free(bs-&gt;opaque);
+    bs-&gt;opaque = NULL;
+    return ret;
+}</code></pre>
+           <p>
+            上边已提到，虚拟机的硬盘文件格式有很多种，如：raw、qcow2、vmdk等，每一种格式都有各自的优缺点。启动虚拟机的时候，可以自由指定。
+           </p>
+           <p>
+            这里对于文件格式进行一定的知识补强，参考以下文章：
+           </p>
+           <p>
+            <a href="https://www.cnovirt.com/archives/684" rel="nofollow" title="qemu磁盘格式raw和qcow2 – oVirt中文社区">
+             qemu磁盘格式raw和qcow2 – oVirt中文社区
+            </a>
+           </p>
+           <p>
+            <a href="https://huaweicloud.csdn.net/63566c04d3efff3090b5f249.html" rel="nofollow" title="虚拟机硬盘格式的选择：qcow2、 raw等_linux_qq_42533216-华为开发者空间">
+             虚拟机硬盘格式的选择：qcow2、 raw等_linux_qq_42533216-华为开发者空间
+            </a>
+           </p>
+           <ul>
+            <li>
+             <strong>
+              raw
+             </strong>
+            </li>
+           </ul>
+           <p>
+            raw是原始磁盘镜像格式，也称裸磁盘格式，是默认的虚拟磁盘格式。
+           </p>
+           <p>
+            raw，原意就是“未经加工”，也指未格式化的磁盘。在Linux中，raw是磁盘映像的纯二进制映像格式。在支持稀疏文件的文件系统里，raw格式的映像只占用记录在其中的数据实际使用的空间。
+           </p>
+           <p>
+            这个格式的优点是简单，易于导出导入到其它模拟器（虚拟化环境）中使用。如果你的文件系统支持“空洞”（holes），例如linux上的ext2、ext3、ext4或windows上的ntfs，这种环境下对于raw磁盘来说只有已经写入的扇区才占用存储空间，可以使用“qemu-img info”命令来查看raw磁盘的真实大小，用“ls -ls”也可以看出来。
+           </p>
+           <ul>
+            <li>
+             <strong>
+              qcow2
+             </strong>
+            </li>
+           </ul>
+           <p>
+            qcow2镜像格式是QEMU最通用的镜像文件格式，它也可以用一个文件的形式来表示一块固定大小的块设备磁盘。在不支持“空洞”的文件系统上能够占用更小的存储空间，并且具备可选的一些配置项，比如AES加密、zlib压缩、快照等。
+           </p>
+           <p>
+            qcow2是目前比较主流的一种虚拟化镜像格式，目前qcow2的性能上接近raw裸格式的性能，与普通的raw格式的镜像相比，它还有以下特性：
+           </p>
+           <ul>
+            <li>
+             更小的存储空间占用，即使文件系统不支持空洞（holes）。qcow2格式的镜像比raw格式文件更小，只有在虚拟机实际占用了磁盘空间时，其文件才会增长，能方便地减少迁移花费的流量，更适用于云计算系统。
+            </li>
+            <li>
+             支持写时拷贝（COW，copy-on-write），镜像文件只反映底层磁盘的变化。
+            </li>
+            <li>
+             支持快照（snapshot），镜像文件能够包含多个快照的历史。
+            </li>
+            <li>
+             可选择基于zlib的压缩方式，它允许每个簇（cluster）单独使用zlib压缩。
+            </li>
+            <li>
+             可以选择AES加密，支持使用128位的AES密钥进行加密。
+            </li>
+           </ul>
+           <p>
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/146267371" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 块设备虚拟化（4）-CSDN博客
+     </title>
+     <meta content="QEMU源码全解析 —— 块设备虚拟化（4）" name="keywords"/>
+     <meta content="文章浏览阅读67次。QEMU源码全解析 —— 块设备虚拟化（4）" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-850e130245.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 块设备虚拟化（4）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2025-03-16 22:22:24 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量67
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2025-03-16 22:18:47 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/146267371" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/146267371
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div id="blogHuaweiyunAdvert">
+        </div>
+        <div id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             155 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/146215807" title="QEMU源码全解析 —— 块设备虚拟化（3）">
+             QEMU源码全解析 —— 块设备虚拟化（3）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/liugan528/article/details/138504918" title="类模板是创建类的模式_创建类是的模版-CSDN博客">
+             类模板是创建类的模式_创建类是的模版-CSDN博客
+            </a>
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/bandaoyu/article/details/85010826" title="【C/C++】 类模板与模板类详解|函数指针\指针函数|函数模板和类模板|普通参数模板、类参数模板-CSDN博客">
+             【C/C++】 类模板与模板类详解|函数指针\指针函数|函数模板和类模板|普通参数模板、类参数模板-CSDN博客
+            </a>
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h3>
+            QEMU初始化阶段的块设备虚拟化
+           </h3>
+           <h4>
+            从模板生成类和类的实例化
+           </h4>
+           <p>
+            上一回以virtio block device为例，讲解了QEMU中类的继承。
+           </p>
+           <p class="img-center">
+            <img alt="" height="273" src="https://i-blog.csdnimg.cn/direct/eb5e050f760543e78ed2ec5e1e6ea06e.png" width="1083"/>
+           </p>
+           <p>
+            每一层都有一个type_init函数，type_init函数用于注册类。同时，每一层也有一个class_init，用于从TypeImpl生产xxxClass。
+           </p>
+           <p>
+            这是很明显的面向对象（如C++和Java）思想在C语言中的移植和体现。笔者并非C++工程师，对Java也玩得不熟，因此这里有必要进行知识补强。QEMU中有大量的相似代码，不把这一块弄清楚，就无法真正和彻底地掌握QEMU的精髓。
+           </p>
+           <p>
+            <strong>
+             从TypeImpl生成xxxClass
+            </strong>
+           </p>
+           <p>
+            类模板使用关键字template引入一个类模板。类模板是创建类的模式，通过提供模板参数来实现,，例如Point&lt;int&gt;。
+           </p>
+           <p>
+            每当使用不同的模板参数时，编译器就会生成一个新的类实例，具有新的成员函数。
+            <br/>
+            也就是说，Point&lt;int&gt;::moveTo是一个函数，Point&lt;double&gt;::moveTo是另一个函数，这正是手动编写这些函数会发生的情况。如果两个不同的源文件都使用Point&lt;int&gt;，编译器和链接器会确保它们共享同一个模板实例。
+           </p>
+           <p>
+            类模板是一个蓝图，它不是具体的类，而是用来创建类的一种模型或框架。类模板允许定义函数和成员变量的数据类型作为模板参数typename T或class T，这样就可以根据需要使用不同的数据类型来创建类。
+           </p>
+           <p>
+            说白了，类模板就是用T作为类里面变量和成员函数参数的数据类型的占位符。模板类就是把占位符替换成实际数据类型（int、float等）后的类。
+           </p>
+           <p>
+            <strong>
+             说明：
+            </strong>
+           </p>
+           <p>
+            <strong>
+             template&lt;typename T&gt; 与 template&lt;class T&gt;等价
+            </strong>
+           </p>
+           <p>
+            在C++的Template中很多地方都用到了typename与class这两个关键字，有时候这两者可以替换，那么这两个关键字是否完全一样呢？
+           </p>
+           <p>
+            事实上class用于定义类，在模板引入c++后，最初定义模板的方法为：template&lt;class T&gt;。这里class关键字表明T是一个类型，后来为了避免class在这两个地方的使用可能给人带来混淆，所以引入了typename这个关键字，它的作用同class一样表明后面的符号为一个类型，这样在定义模板的时候可以使用下面的方式了：
+           </p>
+           <p>
+            template&lt;typename T&gt;
+           </p>
+           <p>
+            在模板定义语法中关键字class与typename的作用完全一样。
+           </p>
+           <p>
+            <strong>
+             类实例化
+            </strong>
+           </p>
+           <p>
+            每一层还可能有instance_init（也可能没有），用于将xxxClass初始化为实例。TYPE_DEVICE的instance_init为device_initfn；TYPE_VIRTIO_BLK的instance_init为virtio_blk_instance_init。
+           </p>
+           <p>
+            在面向对象的编程中，通常把用类创建对象的过程称为实例化。如Date date = new Date();就是用日期类创建了一个日期的对象，就叫对象的实例化。
+           </p>
+           <p>
+            多数语言中，实例化一个对象就是为对象开辟内存空间，或者是不用声明，直接使用new构造函数名，建立一个临时对象。
+           </p>
+           <p>
+            对于QEMU的类继承机制，更加贴近的是Java反射机制。对于Java反射机制的详细介绍以及QEMU类继承与其的对应关系，在下一回中进行详细讲解。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/146466326" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 块设备虚拟化（8）-CSDN博客
+     </title>
+     <meta content="QEMU源码全解析 —— 块设备虚拟化（8）" name="keywords"/>
+     <meta content="文章浏览阅读67次。QEMU源码全解析 —— 块设备虚拟化（8）" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-72afa20676.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 块设备虚拟化（8）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="up-time">
+            最新推荐文章于 2025-04-26 18:32:47 发布
+           </div>
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCurrentTime2.png"/>
+             <span class="time blog-postTime" data-time="2025-03-24 19:42:10">
+              最新推荐文章于 2025-04-26 18:32:47 发布
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量67
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like" data-type="top">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/146466326" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/146466326
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="" id="blogHuaweiyunAdvert">
+        </div>
+        <div class="" id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             174 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views atom-one-light" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/146406647" title="QEMU源码全解析 —— 块设备虚拟化（7）">
+             QEMU源码全解析 —— 块设备虚拟化（7）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，极客时间
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h3>
+            QEMU初始化阶段的块设备虚拟化
+           </h3>
+           <h4>
+            <a name="t1">
+            </a>
+            从模板生成类和类的实例化
+           </h4>
+           <p>
+            上一回在讲解Java反射机制流程的时候，讲到了第2步，再来回顾一下：
+           </p>
+           <p>
+            <img alt="" height="544" src="https://i-blog.csdnimg.cn/direct/777d581569644771bf4817c2c17a508e.png" width="1087"/>
+           </p>
+           <p>
+            上一回讲解virtio_blk_info中的class_init指向的函数virtio_blk_class_init，解析了DeviceClass和DEVICE_CLASS宏。
+           </p>
+           <pre><code class="language-cpp">static void virtio_blk_class_init(ObjectClass *klass, void *data)
+{
+    DeviceClass *dc = DEVICE_CLASS(klass);
+    VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);
+ 
+    device_class_set_props(dc, virtio_blk_properties);
+    dc-&gt;vmsd = &amp;vmstate_virtio_blk;
+    set_bit(DEVICE_CATEGORY_STORAGE, dc-&gt;categories);
+    vdc-&gt;realize = virtio_blk_device_realize;
+    vdc-&gt;unrealize = virtio_blk_device_unrealize;
+    vdc-&gt;get_config = virtio_blk_update_config;
+    vdc-&gt;set_config = virtio_blk_set_config;
+    vdc-&gt;get_features = virtio_blk_get_features;
+    vdc-&gt;set_status = virtio_blk_set_status;
+    vdc-&gt;reset = virtio_blk_reset;
+    vdc-&gt;save = virtio_blk_save_device;
+    vdc-&gt;load = virtio_blk_load_device;
+    vdc-&gt;start_ioeventfd = virtio_blk_data_plane_start;
+    vdc-&gt;stop_ioeventfd = virtio_blk_data_plane_stop;
+}</code></pre>
+           <p>
+            本回解析第2行：
+           </p>
+           <pre><code class="language-cpp">    VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);</code></pre>
+           <p>
+            依样画葫芦。
+           </p>
+           <p>
+            VIRTIO_DEVICE_CLASS是一个宏定义，同样在QEMU源码中不能直接搜索到。要弄清楚VIRTUAL_DEVICE_CLASS，得先从include/hw/virtio/virtio.h中的OBJECT_DECLARE_TYPE讲起。
+           </p>
+           <pre><code class="language-cpp">#define TYPE_VIRTIO_DEVICE "virtio-device"
+OBJECT_DECLARE_TYPE(VirtIODevice, VirtioDeviceClass, VIRTIO_DEVICE)</code></pre>
+           <p>
+            OBJECT_DECLARE_TYPE的相关代码在include/qom/object.h中，代码如下：
+           </p>
+           <pre><code class="language-cpp">/**
+ * OBJECT_DECLARE_TYPE:
+ * @InstanceType: instance struct name
+ * @ClassType: class struct name
+ * @MODULE_OBJ_NAME: the object name in uppercase with underscore separators
+ *
+ * This macro is typically used in a header file, and will:
+ *
+ *   - create the typedefs for the object and class structs
+ *   - register the type for use with g_autoptr
+ *   - provide three standard type cast functions
+ *
+ * The object struct and class struct need to be declared manually.
+ */
+#define OBJECT_DECLARE_TYPE(InstanceType, ClassType, MODULE_OBJ_NAME) \
+    typedef struct InstanceType InstanceType; \
+    typedef struct ClassType ClassType; \
+    \
+    G_DEFINE_AUTOPTR_CLEANUP_FUNC(InstanceType, object_unref) \
+    \
+    DECLARE_OBJ_CHECKERS(InstanceType, ClassType, \
+                         MODULE_OBJ_NAME, TYPE_##MODULE_OBJ_NAME)</code></pre>
+           <p>
+            那么带入实际值：
+           </p>
+           <pre><code class="language-cpp">OBJECT_DECLARE_TYPE(VirtIODevice, VirtioDeviceClass, VIRTIO_DEVICE)</code></pre>
+           <p>
+            得到：
+           </p>
+           <pre><code class="language-cpp">    typedef struct VirtIODevice VirtIODevice;
+    typedef struct VirtioDeviceClass VirtioDeviceClass;
+ 
+    G_DEFINE_AUTOPTR_CLEANUP_FUNC(VirtIODevice, object_unref)
+ 
+    DECLARE_OBJ_CHECKERS(VirtIODevice, VirtioDeviceClass, VIRTIO_DEVICE, TYPE_VIRTIO_DEVICE)</code></pre>
+           <p>
+            先给出完全展开后的实际值：
+           </p>
+           <p>
+            <img alt="" height="380" src="https://i-blog.csdnimg.cn/direct/14836f10e383446197c2f2d0f658fb05.png" width="1092"/>
+           </p>
+           <p>
+            DECLARE_OBJ_CHECKERS宏的定义在include/qom/object.h中，如下：
+           </p>
+           <pre><code class="language-cpp">/**
+ * DECLARE_OBJ_CHECKERS:
+ * @InstanceType: instance struct name
+ * @ClassType: class struct name
+ * @OBJ_NAME: the object name in uppercase with underscore separators
+ * @TYPENAME: type name
+ *
+ * Direct usage of this macro should be avoided, and the complete
+ * OBJECT_DECLARE_TYPE macro is recommended instead.
+ *
+ * This macro will provide the three standard type cast functions for a
+ * QOM type.
+ */
+#define DECLARE_OBJ_CHECKERS(InstanceType, ClassType, OBJ_NAME, TYPENAME) \
+    DECLARE_INSTANCE_CHECKER(InstanceType, OBJ_NAME, TYPENAME) \
+    \
+    DECLARE_CLASS_CHECKERS(ClassType, OBJ_NAME, TYPENAME)</code></pre>
+           <p>
+            DECLARE_INSTANCE_CHECKER宏的定义也在同文件（include/qom/object.h）中，如下：
+           </p>
+           <pre><code class="language-cpp">/**
+ * DECLARE_INSTANCE_CHECKER:
+ * @InstanceType: instance struct name
+ * @OBJ_NAME: the object name in uppercase with underscore separators
+ * @TYPENAME: type name
+ *
+ * Direct usage of this macro should be avoided, and the complete
+ * OBJECT_DECLARE_TYPE macro is recommended instead.
+ *
+ * This macro will provide the instance type cast functions for a
+ * QOM type.
+ */
+#define DECLARE_INSTANCE_CHECKER(InstanceType, OBJ_NAME, TYPENAME) \
+    static inline G_GNUC_UNUSED InstanceType * \
+    OBJ_NAME(const void *obj) \
+    { return OBJECT_CHECK(InstanceType, obj, TYPENAME); }</code></pre>
+           <p>
+            DECLARE_CLASS_CHECKERS宏的定义当然也在include/qom/object.h中，如下：
+           </p>
+           <pre><code class="language-cpp">/**
+ * DECLARE_CLASS_CHECKERS:
+ * @ClassType: class struct name
+ * @OBJ_NAME: the object name in uppercase with underscore separators
+ * @TYPENAME: type name
+ *
+ * Direct usage of this macro should be avoided, and the complete
+ * OBJECT_DECLARE_TYPE macro is recommended instead.
+ *
+ * This macro will provide the class type cast functions for a
+ * QOM type.
+ */
+#define DECLARE_CLASS_CHECKERS(ClassType, OBJ_NAME, TYPENAME) \
+    static inline G_GNUC_UNUSED ClassType * \
+    OBJ_NAME##_GET_CLASS(const void *obj) \
+    { return OBJECT_GET_CLASS(ClassType, obj, TYPENAME); } \
+    \
+    static inline G_GNUC_UNUSED ClassType * \
+    OBJ_NAME##_CLASS(const void *klass) \
+    { return OBJECT_CLASS_CHECK(ClassType, klass, TYPENAME); }</code></pre>
+           <p>
+            这样，
+           </p>
+           <pre><code class="language-cpp">#define DECLARE_OBJ_CHECKERS(InstanceType, ClassType, OBJ_NAME, TYPENAME) \
+    DECLARE_INSTANCE_CHECKER(InstanceType, OBJ_NAME, TYPENAME) \
+    \
+    DECLARE_CLASS_CHECKERS(ClassType, OBJ_NAME, TYPENAME)</code></pre>
+           <p>
+            实际上就相当于：
+           </p>
+           <pre><code class="language-cpp">static inline G_GNUC_UNUSED InstanceType *OBJ_NAME(const void *obj)
+{
+    return OBJECT_CHECK(InstanceType, obj, TYPENAME);
+}
+ 
+static inline G_GNUC_UNUSED ClassType *OBJ_NAME##_GET_CLASS(const void *obj)
+{
+    return OBJECT_GET_CLASS(ClassType, obj, TYPENAME);
+}
+ 
+static inline G_GNUC_UNUSED ClassType *OBJ_NAME##_CLASS(const void *klass)
+{
+    return OBJECT_CLASS_CHECK(ClassType, klass, TYPENAME);
+}</code></pre>
+           <p>
+            进一步地，代入调用DECLARE_OBJ_CHECKERS()时传入的实际值：
+           </p>
+           <pre><code class="language-cpp">DECLARE_OBJ_CHECKERS(VirtIODevice, VirtioDeviceClass, VIRTIO_DEVICE, TYPE_VIRTIO_DEVICE)</code></pre>
+           <pre><code class="language-cpp">#define DECLARE_OBJ_CHECKERS(InstanceType, ClassType, OBJ_NAME, TYPENAME) \
+    DECLARE_INSTANCE_CHECKER(InstanceType, OBJ_NAME, TYPENAME) \
+    \
+    DECLARE_CLASS_CHECKERS(ClassType, OBJ_NAME, TYPENAME)</code></pre>
+           <p>
+            就得到：
+           </p>
+           <pre><code class="language-cpp">DECLARE_INSTANCE_CHECKER(VirtIODevice, VIRTIO_DEVICE, TYPE_VIRTIO_DEVICE)
+ 
+DECLARE_CLASS_CHECKERS(VirtioDeviceClass, VIRTIO_DEVICE, TYPE_VIRTIO_DEVICE)</code></pre>
+           <p>
+            进一步得到：
+           </p>
+           <pre><code class="language-cpp">static inline G_GNUC_UNUSED VirtIODevice *VIRTIO_DEVICE(const void *obj)
+{
+    return OBJECT_CHECK(VirtIODevice, obj, TYPE_DEVICE);
+}
+ 
+static inline G_GNUC_UNUSED VirtioDeviceClass *VIRTIO_DEVICE_GET_CLASS(const void *obj)
+{
+    return OBJECT_GET_CLASS(VirtioDeviceClass, obj, TYPE_DEVICE);
+}
+ 
+static inline G_GNUC_UNUSED VirtioDeviceClass *VIRTIO_DEVICE_CLASS(const void *klass)
+{
+    return OBJECT_CLASS_CHECK(VirtioDeviceClass, klass, TYPE_DEVICE);
+}</code></pre>
+           <p>
+            最终得到：
+           </p>
+           <pre><code class="language-cpp">​static inline G_GNUC_UNUSED VirtIODevice *VIRTIO_DEVICE(const void *obj)
+{
+    return OBJECT_CHECK(VirtIODevice, obj, "virtio-device");
+}
+ 
+static inline G_GNUC_UNUSED VirtioDeviceClass *VIRTIO_DEVICE_GET_CLASS(const void *obj)
+{
+    return OBJECT_GET_CLASS(VirtioDeviceClass, obj, "virtio-device");
+}
+ 
+static inline G_GNUC_UNUSED VirtioDeviceClass *VIRTIO_DEVICE_CLASS(const void *klass)
+{
+    return OBJECT_CLASS_CHECK(VirtioDeviceClass, klass, "virtio-device");
+}</code></pre>
+           <p>
+            综合所有的内容，
+           </p>
+           <pre><code class="language-cpp">    typedef struct VirtIODevice VirtIODevice;
+    typedef struct VirtioDeviceClass VirtioDeviceClass;
+ 
+    G_DEFINE_AUTOPTR_CLEANUP_FUNC(VirtIODevice, object_unref)
+ 
+    DECLARE_OBJ_CHECKERS(VirtIODevice, VirtioDeviceClass, VIRTIO_DEVICE, TYPE_VIRTIO_DEVICE)</code></pre>
+           <p>
+            完整内容是：
+           </p>
+           <pre><code class="language-cpp">​typedef struct VirtIODevice VirtIODevice;
+typedef struct VirtioDeviceClass VirtioDeviceClass;
+ 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(VirtIODevice, object_unref)
+ 
+​static inline G_GNUC_UNUSED VirtIODevice *VIRTIO_DEVICE(const void *obj)
+{
+    return OBJECT_CHECK(VirtIODevice, obj, "virtio-device");
+}
+ 
+static inline G_GNUC_UNUSED VirtioDeviceClass *VIRTIO_DEVICE_GET_CLASS(const void *obj)
+{
+    return OBJECT_GET_CLASS(VirtioDeviceClass, obj, "virtio-device");
+}
+ 
+static inline G_GNUC_UNUSED VirtioDeviceClass *VIRTIO_DEVICE_CLASS(const void *klass)
+{
+    return OBJECT_CLASS_CHECK(VirtioDeviceClass, klass, "virtio-device");
+}
+</code></pre>
+           <p>
+            再次与系统展开内容进行对比：
+           </p>
+           <p>
+            <img alt="" height="380" src="https://i-blog.csdnimg.cn/direct/14836f10e383446197c2f2d0f658fb05.png" width="1092"/>
+           </p>
+           <p>
+            弄清楚了DEVICE_CLASS的定义，回到主线代码中。
+           </p>
+           <pre><code class="language-cpp">static void virtio_blk_class_init(ObjectClass *klass, void *data)
+{
+    DeviceClass *dc = DEVICE_CLASS(klass);
+    VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);
+    ……
+}</code></pre>
+           <p>
+            中的
+           </p>
+           <pre><code class="language-cpp">    VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);</code></pre>
+           <p>
+            就是：
+           </p>
+           <pre><code class="language-cpp">static inline G_GNUC_UNUSED VirtioDeviceClass *VIRTIO_DEVICE_CLASS(const void *klass)
+{
+    return OBJECT_CLASS_CHECK(VirtioDeviceClass, klass, "virtio-device");
+}</code></pre>
+           <pre><code class="language-cpp">    VirtioDeviceClass *vdc = OBJECT_CLASS_CHECK(VirtioDeviceClass, klass, "virtio-device");</code></pre>
+           <p>
+            这样，反映射调用流程的第2步就解析完了，DeviceClass和VirtioDeviceClass已经生成了。
+           </p>
+           <p>
+            <img alt="" height="540" src="https://i-blog.csdnimg.cn/direct/93c853d5d02140bc953d22a34678688d.png" width="1106"/>
+           </p>
+           <p>
+            欲知后事如何，且看下回分解。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

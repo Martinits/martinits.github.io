@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/145816202" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 内存虚拟化（19）-CSDN博客
+     </title>
+     <meta content="QEMU源码全解析 —— 内存虚拟化（19）" name="keywords"/>
+     <meta content="文章浏览阅读32次。QEMU源码全解析 —— 内存虚拟化（19）" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-850e130245.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 内存虚拟化（19）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2025-02-24 08:06:58 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量32
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2025-02-24 08:03:11 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/145816202" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/145816202
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div id="blogHuaweiyunAdvert">
+        </div>
+        <div id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             155 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/145801576" title="QEMU源码全解析 —— 内存虚拟化（18）">
+             QEMU源码全解析 —— 内存虚拟化（18）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/leiyanjie8995/article/details/127603209" title="QEMU内存管理模型">
+             QEMU内存管理模型
+            </a>
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/JaCenz/article/details/130288702" title="浅谈QEMU Memory Region 与 Address Space">
+             浅谈QEMU Memory Region 与 Address Space
+            </a>
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/dvd37784302/article/details/138370458" title="【QEMU系统分析之实例篇（七）】-CSDN博客">
+             【QEMU系统分析之实例篇（七）】-CSDN博客
+            </a>
+           </p>
+           <p>
+            <a href="https://www.cnblogs.com/edver/p/14470706.html" rel="nofollow" title="QEMU内存分析（一）：内存虚拟化关键结构体 - Edver - 博客园">
+             QEMU内存分析（一）：内存虚拟化关键结构体 - Edver - 博客园
+            </a>
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h4>
+            2. QEMU虚拟机内存初始化
+           </h4>
+           <p>
+            前边用了几回重点讲解了内存平坦化。按道理来说，接下来该往下继续讲了。但是，笔者在此并不想开新的内容，因为这几回实际上大都是参考了《QEMU/KVM源码解析与应用》，其中的内容笔者还是觉得不够细，没有完全涉及到路径中遇到的每一个函数，自己也还没有完全吃透。在此，笔者准备再次重走以下流程，把整个流程中涉及到的各个函数（最起码绝大多数函数）、尤其是之前没有展开讲的函数解析一遍，把这一流程用“磨蔓儿”的方式进行讲解，以使自己以及读者加深印象，一次就把这部分内容彻底掌握。
+           </p>
+           <blockquote>
+            <p>
+             main()
+            </p>
+            <p>
+             ---&gt; qemu_init()
+            </p>
+            <p>
+             ---&gt; qemu_create_machine()
+            </p>
+            <p>
+             ---&gt; cpu_exec_init_all()
+            </p>
+            <p>
+             ---&gt; memory_map_init()
+            </p>
+            <p>
+             ---&gt; address_space_init()
+            </p>
+            <p>
+             ---&gt; address_space_update_topology()
+            </p>
+           </blockquote>
+           <p>
+            <strong>
+             （1）main函数
+            </strong>
+           </p>
+           <p>
+            QEMU的入口main函数在softmmu/main.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">int main(int argc, char **argv)
+{
+    qemu_init(argc, argv);
+    return qemu_main();
+}</code></pre>
+           <p>
+            <strong>
+             （2）qemu_init函数
+            </strong>
+           </p>
+           <p>
+            qemu_init函数在softmmu/vl.c中，函数很长，一共有将近1000行（qemu-8.1.4版本），这里只截取调用qemu_create_machine函数的一段：
+           </p>
+           <pre><code class="language-cpp">static QDict *machine_opts_dict;
+……
+
+void qemu_init(int argc, char **argv)
+{
+    ……
+    machine_opts_dict = qdict_new();
+    if (userconfig) {
+        qemu_read_default_config_file(&amp;error_fatal);
+    }
+
+    /* second pass of option parsing */
+    optind = 1;
+    for(;;) {
+        if (optind &gt;= argc)
+            break;
+        if (argv[optind][0] != '-') {
+            loc_set_cmdline(argv, optind, 1);
+            drive_add(IF_DEFAULT, 0, argv[optind++], HD_OPTS);
+        } else {
+            const QEMUOption *popt;
+
+            popt = lookup_opt(argc, argv, &amp;optarg, &amp;optind);
+            if (!(popt-&gt;arch_mask &amp; arch_type)) {
+                error_report("Option not supported for this target");
+                exit(1);
+            }
+            switch(popt-&gt;index) {
+            case QEMU_OPTION_cpu:
+                /* hw initialization will check this */
+                cpu_option = optarg;
+                break;
+            ……
+            case QEMU_OPTION_nographic:
+                qdict_put_str(machine_opts_dict, "graphics", "off");
+                nographic = true;
+                dpy.type = DISPLAY_TYPE_NONE;
+                break;
+            ……
+            case QEMU_OPTION_kernel:
+                qdict_put_str(machine_opts_dict, "kernel", optarg);
+                break;
+            case QEMU_OPTION_initrd:
+                qdict_put_str(machine_opts_dict, "initrd", optarg);
+                break;
+            case QEMU_OPTION_append:
+                qdict_put_str(machine_opts_dict, "append", optarg);
+                break;
+            case QEMU_OPTION_dtb:
+                qdict_put_str(machine_opts_dict, "dtb", optarg);
+                break;
+            ……
+            case QEMU_OPTION_bios:
+                qdict_put_str(machine_opts_dict, "firmware", optarg);
+                break;
+            ……
+            case QEMU_OPTION_enable_kvm:
+                qdict_put_str(machine_opts_dict, "accel", "kvm");
+                break;
+            case QEMU_OPTION_M:
+            case QEMU_OPTION_machine:
+                {
+                    bool help;
+
+                    keyval_parse_into(machine_opts_dict, optarg, "type", &amp;help, &amp;error_fatal);
+                    if (help) {
+                        machine_help_func(machine_opts_dict);
+                        exit(EXIT_SUCCESS);
+                    }
+                    break;
+                }
+            ……
+            case QEMU_OPTION_usb:
+                qdict_put_str(machine_opts_dict, "usb", "on");
+                break;
+            case QEMU_OPTION_usbdevice:
+                qdict_put_str(machine_opts_dict, "usb", "on");
+                add_device_config(DEV_USB, optarg);
+                break;
+            ……
+            case QEMU_OPTION_no_acpi:
+                warn_report("-no-acpi is deprecated, use '-machine acpi=off' instead");
+                qdict_put_str(machine_opts_dict, "acpi", "off");
+                break;
+            case QEMU_OPTION_no_hpet:
+                warn_report("-no-hpet is deprecated, use '-machine hpet=off' instead");
+                qdict_put_str(machine_opts_dict, "hpet", "off");
+                break;
+            ……
+    }
+    ……
+    qemu_create_machine(machine_opts_dict);
+    ……
+}
+</code></pre>
+           <p>
+            <strong>
+             （3）qemu_create_machine函数
+            </strong>
+           </p>
+           <p>
+            qemu_create_machine函数在同文件（softmmu/vl.c）中，代码如下：
+           </p>
+           <pre><code class="language-cpp">static void qemu_create_machine(QDict *qdict)
+{
+    MachineClass *machine_class = select_machine(qdict, &amp;error_fatal);
+    object_set_machine_compat_props(machine_class-&gt;compat_props);
+
+    current_machine = MACHINE(object_new_with_class(OBJECT_CLASS(machine_class)));
+    object_property_add_child(object_get_root(), "machine",
+                              OBJECT(current_machine));
+    object_property_add_child(container_get(OBJECT(current_machine),
+                                            "/unattached"),
+                              "sysbus", OBJECT(sysbus_get_default()));
+
+    if (machine_class-&gt;minimum_page_bits) {
+        if (!set_preferred_target_page_bits(machine_class-&gt;minimum_page_bits)) {
+            /* This would be a board error: specifying a minimum smaller than
+             * a target's compile-time fixed setting.
+             */
+            g_assert_not_reached();
+        }
+    }
+
+    cpu_exec_init_all();
+    page_size_init();
+
+    if (machine_class-&gt;hw_version) {
+        qemu_set_hw_version(machine_class-&gt;hw_version);
+    }
+
+    /*
+     * Get the default machine options from the machine if it is not already
+     * specified either by the configuration file or by the command line.
+     */
+    if (machine_class-&gt;default_machine_opts) {
+        QDict *default_opts =
+            keyval_parse(machine_class-&gt;default_machine_opts, NULL, NULL,
+                         &amp;error_abort);
+        qemu_apply_legacy_machine_options(default_opts);
+        object_set_properties_from_keyval(OBJECT(current_machine), default_opts,
+                                          false, &amp;error_abort);
+        qobject_unref(default_opts);
+    }
+}
+</code></pre>
+           <p>
+            <strong>
+             （4）cpu_exec_init_all函数
+            </strong>
+           </p>
+           <p>
+            cpu_exec_init_all函数在softmmu/physmem.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">void cpu_exec_init_all(void)
+{
+    qemu_mutex_init(&amp;ram_list.mutex);
+    /* The data structures we set up here depend on knowing the page size,
+     * so no more changes can be made after this point.
+     * In an ideal world, nothing we did before we had finished the
+     * machine setup would care about the target page size, and we could
+     * do this much later, rather than requiring board models to state
+     * up front what their requirements are.
+     */
+    finalize_target_page_bits();
+    io_mem_init();
+    memory_map_init();
+    qemu_mutex_init(&amp;map_client_list_lock);
+}</code></pre>
+           <p>
+            从cpu_exec_init_all函数开始，就步入正题了。可以看到，cpu_exec_init_all函数并无参数，因此它与之前的qemu_create_machine等函数实际上并无过多瓜葛，只是调用与被调用的关系。
+           </p>
+           <p>
+            前文书早已讲过，cpu_exec_init_all函数会进行一些初始化工作，其中io_mem_init()和memory_map_init()两个函数的调用与内存相关。其中，io_mem_init()用于对I/O内存区域进行初始化；而memory_map_init()则是对系统内存区域进行初始化。这里重点关注memory_map_init函数。
+           </p>
+           <p>
+            <strong>
+             （5）memory_map_init函数
+            </strong>
+           </p>
+           <p>
+            memory_map_init函数也在softmmu/physmem.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">static void memory_map_init(void)
+{
+    system_memory = g_malloc(sizeof(*system_memory));
+
+    memory_region_init(system_memory, NULL, "system", UINT64_MAX);
+    address_space_init(&amp;address_space_memory, system_memory, "memory");
+
+    system_io = g_malloc(sizeof(*system_io));
+    memory_region_init_io(system_io, NULL, &amp;unassigned_io_ops, NULL, "io",
+                          65536);
+    address_space_init(&amp;address_space_io, system_io, "I/O");
+}</code></pre>
+           <p>
+            对于memory_map_init函数再一次的深入解析，请看下回。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

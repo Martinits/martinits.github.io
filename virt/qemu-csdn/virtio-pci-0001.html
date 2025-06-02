@@ -1,0 +1,399 @@
+﻿    <!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><style>.nodata  main {width:1000px;margin: auto;}</style></head><body class="nodata " style=""><div class="main_father clearfix d-flex justify-content-center " style="height:100%;"> <div class="container clearfix " id="mainBox"><main><div class="blog-content-box">
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" type="text/css" href="https://2.lz787.com/assets/1.css">
+
+        <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin-yellow/skin-yellow-28d34ab5fa.min.css"><div class="blog-content-box">
+    <div class="article-header-box">
+        <div class="article-header">
+            <div class="article-title-box">
+                <h1 class="title-article" id="articleContentId">VirtIO实现原理之VirtIO-PCI（1）</h1>
+            </div>
+            <div class="article-info-box">
+                <div class="article-bar-top">
+                    <img class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png" alt="">
+                    <div class="bar-content">
+                      <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" target="_blank" rel="noopener" title="蓝天居士">蓝天居士</a>
+                    <img class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png" alt="">
+                    <span class="time">已于&nbsp;2024-11-21 22:56:20&nbsp;修改</span>
+                   <div class="read-count-box">
+                      <img class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png" alt="">
+                      <span class="read-count">阅读量147</span>
+                      <a id="blog_detail_zk_collection" class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}'>
+                          <img class="article-collect-img article-heard-img un-collect-status isdefault" style="display:inline-block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" alt="">
+                          <img class="article-collect-img article-heard-img collect-status isactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" alt="">
+                          <span class="name">收藏</span>
+                          <span class="get-collection">
+                          </span>
+                      </a>
+                      <div class="read-count-box is-like">
+                        <img class="article-read-img article-heard-img" style="display:none" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" alt="">
+                        <img class="article-read-img article-heard-img" style="display:block" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" alt="">
+                        <span class="read-count" id="blog-digg-num">点赞数
+                            3
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="blog-tags-box">
+                    <div class="tags-box artic-tag-box">
+                            <span class="label">分类专栏：</span>
+                                <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" rel="noopener">QEMU/KVM</a>
+                            <span class="label">文章标签：</span>
+                                <a rel="nofollow" data-report-query="spm=1001.2101.3001.4223" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"VirtIO","ab":"new","extra":"{\"searchword\":\"VirtIO\"}"}' data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"VirtIO","ab":"new","extra":"{\"searchword\":\"VirtIO\"}"}' class="tag-link" href="https://so.csdn.net/so/search/s.do?q=VirtIO&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank" rel="noopener">VirtIO</a>
+                                <a rel="nofollow" data-report-query="spm=1001.2101.3001.4223" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"PCI","ab":"new","extra":"{\"searchword\":\"PCI\"}"}' data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"PCI","ab":"new","extra":"{\"searchword\":\"PCI\"}"}' class="tag-link" href="https://so.csdn.net/so/search/s.do?q=PCI&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank" rel="noopener">PCI</a>
+                    </div>
+                </div>
+                <div class="up-time"><span>于&nbsp;2024-11-11 07:35:29&nbsp;首次发布</span></div>
+                <div class="slide-content-box">
+                    <div class="article-copyright">
+                        <div class="creativecommons">
+                            版权声明：本文为博主原创文章，遵循<a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>版权协议，转载请附上原文出处链接和本声明。
+                        </div>
+                        <div class="article-source-link">
+                            本文链接：<a href="https://blog.csdn.net/phmatthaus/article/details/143662906" target="_blank">https://blog.csdn.net/phmatthaus/article/details/143662906</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="operating">
+                    <a class="href-article-edit slide-toggle">版权</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="blogHuaweiyunAdvert"></div>
+        <div id="blogColumnPayAdvert">
+            <div class="column-group">
+                <div class="column-group-item column-group0 column-group-item-one">
+                    <div class="item-l">
+                        <a class="item-target" href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM"
+                        data-report-view='{"spm":"1001.2101.3001.6332"}'
+                        data-report-click='{"spm":"1001.2101.3001.6332"}'>
+                            <img class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224" alt="">
+                            <span class="title item-target">
+                                <span>
+                                <span class="tit">QEMU/KVM</span>
+                                    <span class="dec">专栏收录该内容</span>
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="item-m">
+                        <span>132 篇文章</span>
+                        <span>41 订阅</span>
+                        <span class="old-add-new-box">
+                            <span class="price">yen49.90</span>
+                            <span class="oldprice">yen99.00</span>
+                        </span>
+                    </div>
+                    <div class="item-r">
+                                    <a class="item-target article-column-subscribe">已订阅
+                                    </a>
+                                    <a class="item-target column-studyvip-discount column-studyvip-pass"
+                                    data-report-view='{"spm":"1001.2015.3001.8590"}'
+                                    data-report-click='{"spm":"1001.2015.3001.8590"}'>8折续费
+                                    </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="learning_the_member_box">
+            <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+                <div class="left"><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png" alt=""><span>您已是超级会员，正在免费阅读会员专享内容</span></div>
+                <div class="right"><span>查看更多超级会员权益</span><img src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png" alt=""></div>
+            </a>
+        </div>
+    <article class="baidu_pl">
+        <div id="article_content" class="article_content clearfix">
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css">
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css">
+             
+                <div id="content_views" class="htmledit_views">
+                    <p>本文内容参考&#xff1a;</p> 
+<p><a href="https://blog.csdn.net/huang987246510/article/details/103379926" title="VirtIO实现原理——PCI基础_virtio-pci-CSDN博客">VirtIO实现原理——PCI基础_virtio-pci-CSDN博客</a></p> 
+<p><a href="https://phmatthaus.blog.csdn.net/article/details/134942218" rel="nofollow" title="QEMU源码全解析 —— virtio&#xff08;3&#xff09;_qemu virtio block bus-CSDN博客">QEMU源码全解析 —— virtio&#xff08;3&#xff09;_qemu virtio block bus-CSDN博客</a></p> 
+<p>特此致谢&#xff01;</p> 
+<p></p> 
+<h3>序言</h3> 
+<p>本系列文章是笔者在看了网名为“享乐主”的VirtIO系列文章后决心要写的。这位博主的“VirtIO专栏”中博文的内容从技术层面来讲写得非常好&#xff0c;既有广度又有深度。但是如果论文笔以及行文方式和易理解程度&#xff0c;就还需要仔细打磨了。</p> 
+<p><img alt="ac86e5988a9740f9974d33b4c568300c.png" src="https://i-blog.csdnimg.cn/direct/ac86e5988a9740f9974d33b4c568300c.png" /></p> 
+<p>笔者就用本系列文章&#xff0c;以“享乐主”的“VirtIO”专栏文章为蓝本以及主线脉络&#xff0c;以自己的理解和行文方式撰写这一系列文章。一方面&#xff0c;可以算作对原系列文章的“注”&#xff08;当然&#xff0c;不仅仅是注&#xff09;&#xff1b;另一方面&#xff0c;也会结合笔者自己的理解、笔者既有文章中的知识点以及QEMU/KVM源码进行补充和拓展。本系列文章将收录到笔者的“QEMU/KVM”专栏中。</p> 
+<p>在开始正式文章之前&#xff0c;再次表达对“享乐主”的谢意&#xff01;</p> 
+<h3>一、VirtIO-PCI初始化</h3> 
+<p>virtio设备<strong>首先需要创建一个PCI设备</strong>&#xff0c;叫作<strong>virtio PCI代理设备</strong>&#xff0c;这个代理设备<strong>挂到PCI总线上</strong>。</p> 
+<p>接着&#xff0c;<strong>virtio代理设备再创建一条virtio总线</strong>&#xff0c;这样<strong>virtio设备就可以挂到这条virtio总线上了</strong>。</p> 
+<p><img alt="f8f27718eb2a4a478c6b5489dc09cc17.png" src="https://i-blog.csdnimg.cn/blog_migrate/f8f27718eb2a4a478c6b5489dc09cc17.png" /></p> 
+<p>按照上边的逻辑&#xff0c;virtio-blk基于virtio-pci&#xff0c;virtio-pci基于pci&#xff0c;所以virtio-blk初始化要从pci设备初始化说起。</p> 
+<h4>1. PCI初始化</h4> 
+<p>PCI驱动框架初始化在内核中有两个入口&#xff0c;分别如下&#xff1a;</p> 
+<p><strong>&#xff08;1&#xff09;arch_initcall(pci_arch_init)</strong></p> 
+<p>在arch/x86/pci/init.c中&#xff08;笔者选用的内核版本为linux-6.1.10&#xff0c;后面都是此版本&#xff09;。代码如下&#xff1a;</p> 
+<pre><code class="language-cpp">/* arch_initcall has too random ordering, so call the initializers
+   in the right sequence from here. */
+static __init int pci_arch_init(void)
+{
+	int type, pcbios &#61; 1;
+
+	type &#61; pci_direct_probe();
+
+	if (!(pci_probe &amp; PCI_PROBE_NOEARLY))
+		pci_mmcfg_early_init();
+
+	if (x86_init.pci.arch_init)
+		pcbios &#61; x86_init.pci.arch_init();
+
+	/*
+	 * Must happen after x86_init.pci.arch_init(). Xen sets up the
+	 * x86_init.irqs.create_pci_msi_domain there.
+	 */
+	x86_create_pci_msi_domain();
+
+	if (!pcbios)
+		return 0;
+
+	pci_pcbios_init();
+
+	/*
+	 * don&#39;t check for raw_pci_ops here because we want pcbios as last
+	 * fallback, yet it&#39;s needed to run first to set pcibios_last_bus
+	 * in case legacy PCI probing is used. otherwise detecting peer busses
+	 * fails.
+	 */
+	pci_direct_init(type);
+
+	if (!raw_pci_ops &amp;&amp; !raw_pci_ext_ops)
+		printk(KERN_ERR
+		&#34;PCI: Fatal: No config space access function found\n&#34;);
+
+	dmi_check_pciprobe();
+
+	dmi_check_skip_isa_align();
+
+	return 0;
+}
+arch_initcall(pci_arch_init);</code></pre> 
+<p>体系结构的初始化&#xff0c;包括初始化IO地址0xCF8。</p> 
+<p><strong>&#xff08;2&#xff09;subsys_initcall(pci_subsys_init)</strong></p> 
+<p>在arch/x86/pci/legacy.c中。代码如下&#xff1a;</p> 
+<pre><code class="language-cpp">static int __init pci_subsys_init(void)
+{
+	/*
+	 * The init function returns an non zero value when
+	 * pci_legacy_init should be invoked.
+	 */
+	if (x86_init.pci.init()) {
+		if (pci_legacy_init()) {
+			pr_info(&#34;PCI: System does not support PCI\n&#34;);
+			return -ENODEV;
+		}
+	}
+
+	pcibios_fixup_peer_bridges();
+	x86_init.pci.init_irq();
+	pcibios_init();
+
+	return 0;
+}
+subsys_initcall(pci_subsys_init);</code></pre> 
+<p>PCI子系统初始化&#xff0c;这个过程会完成PCI总线树上设备的枚举&#xff0c;Host bridge会为PCI设备分配地址空间并将其写入BAR寄存器。</p> 
+<p>体系结构的初始化不作介绍&#xff0c;主要介绍PCI总线树的枚举和配置。</p> 
+<p>更多内容请看下回。</p> 
+<p></p>
+                </div>
+        </div>
+    </article>
+  <script>
+    $(function() {
+      setTimeout(function () {
+        var mathcodeList = document.querySelectorAll('.htmledit_views img.mathcode');
+        if (mathcodeList.length > 0) {
+          for (let i = 0; i < mathcodeList.length; i  ) {
+            if (mathcodeList[i].complete) {
+              if (mathcodeList[i].naturalWidth === 0 || mathcodeList[i].naturalHeight === 0) {
+                var alt = mathcodeList[i].alt;
+                alt = '\\('   alt   '\\)';
+                var curSpan = $('<span class="img-codecogs"></span>');
+                curSpan.text(alt);
+                $(mathcodeList[i]).before(curSpan);
+                $(mathcodeList[i]).remove();
+              }
+            } else {
+              mathcodeList[i].onerror = function() {
+                var alt = mathcodeList[i].alt;
+                alt = '\\('   alt   '\\)';
+                var curSpan = $('<span class="img-codecogs"></span>');
+                curSpan.text(alt);
+                $(mathcodeList[i]).before(curSpan);
+                $(mathcodeList[i]).remove();
+              };
+            }
+          }
+          MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+        }
+      }, 500)
+    });
+  </script>
+</div>
+<div class="directory-boxshadow-dialog" style="display:none;">
+  <div class="directory-boxshadow-dialog-box">
+  </div>
+   <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+      <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png">
+      <div class="vip-limited-time-top">
+        确定要放弃本次机会？
+      </div>
+      <span class="vip-limited-time-text">福利倒计时</span>
+      <div class="limited-time-box-new">
+        <span class="time-hour"></span>
+        <i>:</i>
+        <span class="time-minite"></span>
+        <i>:</i>
+        <span class="time-second"></span>
+      </div>
+      <div class="limited-time-vip-box">
+        <p>
+          <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png">
+          <span class="def">立减 yen</span>
+          <span class="active limited-num"></span>
+        </p>
+        <span class="">普通VIP年卡可用</span>
+      </div>
+      <a class="limited-time-btn-new" href="https://mall.csdn.net/vip" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query='spm=1001.2101.3001.9621'>立即使用</a>
+  </div>
+</div>    <div class="more-toolbox-new more-toolbar" id="toolBarBox">
+      <div class="left-toolbox">
+        <div class="toolbox-left">
+            <div class="profile-box">
+              <a class="profile-href" target="_blank" href="https://phmatthaus.blog.csdn.net"><img class="profile-img" src="https://profile-avatar.csdnimg.cn/46a9a1c4beee44079d3bc167b2c63fbc_phmatthaus.jpg!1">
+                <span class="profile-name">
+                  蓝天居士
+                </span>
+              </a>
+            </div>
+            <div class="profile-attend">
+                <a class="tool-attend tool-bt-button tool-unbt-attend" href="javascript:;" data-report-view='{"mod":"1592215036_002","spm":"1001.2101.3001.4232","extend1":"已关注"}'>已关注</a>
+              <a class="tool-item-follow active-animation" style="display:none;">关注</a>
+            </div>
+        </div>
+        <div class="toolbox-middle">
+          <ul class="toolbox-list">
+            <li class="tool-item tool-item-size tool-active is-like" id="is-like">
+              <a class="tool-item-href">
+                <img style="display:none;" id="is-like-imgactive-animation-like" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarThumbUpactive.png" alt="">
+                <img class="isactive" style="display:none" id="is-like-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like-active.png" alt="">
+                <img class="isdefault" style="display:block" id="is-like-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like.png" alt="">
+                <span id="spanCount" class="count ">
+                    3
+                </span>
+              </a>
+              <div class="tool-hover-tip"><span class="text space">点赞</span></div>
+            </li>
+            <li class="tool-item tool-item-size tool-active is-unlike" id="is-unlike">
+              <a class="tool-item-href">
+                <img class="isactive" style="margin-right:0px;display:none" id="is-unlike-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike-active.png" alt="">
+                <img class="isdefault" style="margin-right:0px;display:block" id="is-unlike-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike.png" alt="">
+                <span id="unlikeCount" class="count "></span>
+              </a>
+              <div class="tool-hover-tip"><span class="text space">踩</span></div>
+            </li>
+            <li class="tool-item tool-item-size tool-active is-collection ">
+              <a class="tool-item-href" href="javascript:;" data-report-click='{"mod":"popu_824","spm":"1001.2101.3001.4130","ab":"new"}'>
+                <img style="display:none" id="is-collection-img-collection" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect-active.png" alt="">
+                <img class="isdefault" id="is-collection-img" style="display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect.png" alt="">
+                <img class="isactive" id="is-collection-imgactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCollectActive.png" alt="">
+                <span class="count get-collection " data-num="0" id="get-collection">
+                    0
+                </span>
+              </a>
+              <div class="tool-hover-tip collect">
+                <div class="collect-operate-box">
+                  <span class="collect-text" id="is-collection">
+                    收藏
+                  </span>
+                </div>
+              </div>
+              <div class="tool-active-list">
+                <div class="text">
+                  觉得还不错?
+                  <span class="collect-text" id="tool-active-list-collection">
+                    一键收藏
+                  </span>
+                 <img id="tool-active-list-close" src="https://csdnimg.cn/release/blogv2/dist/pc/img/collectionCloseWhite.png" alt="">
+                </div>
+              </div>
+            </li>
+            <li class="tool-item tool-item-size tool-active tool-item-comment">
+              <div class="guide-rr-first">
+                <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward01.png" alt="">
+                <button class="btn-guide-known">知道了</button>
+              </div>
+                <a class="tool-item-href go-side-comment" data-report-click='{"spm":"1001.2101.3001.7009"}'>
+                <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/comment.png" alt="">
+                <span class="count">
+                      0
+                </span>
+              </a>
+              <div class="tool-hover-tip"><span class="text space">评论</span></div>
+            </li>
+            <li class="tool-item tool-item-size tool-active tool-QRcode" data-type="article" id="tool-share">
+              <a class="tool-item-href" href="javascript:;" data-report-view='{"spm":"3001.4129","extra":{"type":"blogdetail"}}'>
+                <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/share.png" alt="">
+                <span class="count">分享</span>
+              </a>
+                <div class="QRcode" id="tool-QRcode">
+                <div class="share-bg-box">
+                  <div class="share-content">
+                    <a id="copyPosterUrl" data-type="link" class="btn-share">复制链接</a>
+                  </div>
+                  <div class="share-content">
+                    <a class="btn-share" data-type="qq">分享到 QQ</a>
+                  </div>
+                  <div class="share-content">
+                    <a class="btn-share" data-type="weibo">分享到新浪微博</a>
+                  </div>
+                  <div class="share-code">
+                    <div class="share-code-box" id='shareCode'></div>
+                    <div class="share-code-text">
+                      <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/share/icon-wechat.png" alt="">扫一扫
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+                <li class="tool-item tool-item-size tool-active tool-item-reward">
+                  <a class="tool-item-href" href="javascript:;" data-report-click='{"mod":"popu_830","spm":"1001.2101.3001.4237","dest":"","ab":"new"}'>
+                    <img class="isdefault reward-bt" id="rewardBtNew" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏">
+                    <span class="count">打赏</span>
+                  </a>
+                  <div class="tool-hover-tip"><span class="text space">打赏</span></div>
+                </li>
+          <li class="tool-item tool-item-size tool-active is-more" id="is-more">
+            <a class="tool-item-href">
+              <img class="isdefault" style="margin-right:0px;display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/more.png" alt="">
+              <span class="count"></span>
+            </a>
+            <div class="more-opt-box">
+              <div class="mini-box">
+                    <a class="tool-item-href" id="rewardBtNewHide" data-report-click='{"spm":"3001.4237","extra":"{\"type\":\"hide\"}"}'>
+                      <img class="isdefault reward-bt" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏">
+                      <span class="count">打赏</span>
+                    </a>
+                <a class="tool-item-href" id="toolReportBtnHide">
+                  <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt="">
+                  <span class="count">举报</span>
+                </a>
+              </div>
+              <div class="normal-box">
+                <a class="tool-item-href" id="toolReportBtnHideNormal">
+                  <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt="">
+                  <span class="count">举报</span>
+                </a>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="toolbox-right"><script type="text/javascript" crossorigin src="https://g.csdnimg.cn/common/csdn-login-box/csdn-login-box.js"></script></html>

@@ -1,0 +1,727 @@
+ <!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<link href="https://blog.csdn.net/phmatthaus/article/details/140407229" rel="canonical"/>
+<meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+<meta content="webkit" name="renderer">
+<meta content="webkit" name="force-rendering">
+<meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<meta content='{"pid": "blog", "spm":"1001.2101"}' name="report"/>
+<meta content="always" name="referrer"/>
+<meta content="no-siteapp" http-equiv="Cache-Control"><link href="#" media="handheld" rel="alternate"/>
+<meta content="5a59773ab8077d4a62bf469ab966a63b_1497598848" name="shenma-site-verification"/>
+<meta content="pc" name="applicable-device"/>
+<link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+<title>QEMU源码全解析 —— CPU虚拟化（1）-CSDN博客</title>
+
+<meta content="QEMU源码全解析 —— CPU虚拟化（1）" name="keywords"/>
+<meta content="文章浏览阅读298次。QEMU源码全解析 —— CPU虚拟化（1）" name="description"/>
+<link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-f01bac114a.min.css" rel="stylesheet" type="text/css"/>
+
+
+<link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+
+
+
+<meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+
+
+
+<link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+<style>
+        .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+    </style>
+
+
+
+
+</meta></meta></meta></head>
+<body class="nodata" style="">
+
+
+
+
+<link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+<link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+<link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+
+
+<div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+<div class="container clearfix container-concision" id="mainBox">
+
+<main>
+
+<div class="blog-content-box">
+<div class="article-header-box">
+<div class="article-header">
+<div class="article-title-box">
+<h1 class="title-article" id="articleContentId">QEMU源码全解析 —— CPU虚拟化（1）</h1>
+</div>
+<div class="article-info-box">
+<div class="article-bar-top">
+<img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+<div class="bar-content">
+<a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">蓝天居士</a>
+<img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+<span class="time">已于 2024-07-16 19:57:30 修改</span>
+<div class="read-count-box">
+<img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+<span class="read-count">阅读量298</span>
+<a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+<img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+<img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+<span class="name">收藏</span>
+<span class="get-collection">
+</span>
+</a>
+<div class="read-count-box is-like">
+<img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+<img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+<span class="read-count" id="blog-digg-num">点赞数
+                            1
+                        </span>
+</div>
+</div>
+</div>
+</div>
+<div class="blog-tags-box">
+<div class="tags-box artic-tag-box">
+<span class="label">分类专栏：</span>
+<a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">QEMU/KVM</a>
+<span class="label">文章标签：</span>
+<a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">QEMU</a>
+<a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">KVM</a>
+<a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"CPU虚拟化","ab":"new","extra":"{\"searchword\":\"CPU虚拟化\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"CPU虚拟化","ab":"new","extra":"{\"searchword\":\"CPU虚拟化\"}"}' href="https://so.csdn.net/so/search/s.do?q=CPU%E8%99%9A%E6%8B%9F%E5%8C%96&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">CPU虚拟化</a>
+</div>
+</div>
+<div class="up-time"><span>于 2024-07-13 23:35:04 首次发布</span></div>
+<div class="slide-content-box">
+<div class="article-copyright">
+<div class="creativecommons">
+                            版权声明：本文为博主原创文章，遵循<a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank"> CC 4.0 BY-SA </a>版权协议，转载请附上原文出处链接和本声明。
+                        </div>
+<div class="article-source-link">
+                            本文链接：<a href="https://blog.csdn.net/phmatthaus/article/details/140407229" target="_blank">https://blog.csdn.net/phmatthaus/article/details/140407229</a>
+</div>
+</div>
+</div>
+<div class="operating">
+<a class="href-article-edit slide-toggle">版权</a>
+</div>
+</div>
+</div>
+</div>
+<div id="blogHuaweiyunAdvert"></div>
+<div id="blogColumnPayAdvert">
+<div class="column-group">
+<div class="column-group-item column-group0 column-group-item-one">
+<div class="item-l">
+<a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+<img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+<span class="title item-target">
+<span>
+<span class="tit">QEMU/KVM</span>
+<span class="dec">专栏收录该内容</span>
+</span>
+</span>
+</a>
+</div>
+<div class="item-m">
+<span>132 篇文章</span>
+<span>41 订阅</span>
+<span class="old-add-new-box">
+<span class="price">¥49.90</span>
+<span class="oldprice">¥99.00</span>
+</span>
+</div>
+<div class="item-r">
+<a class="item-target article-column-subscribe">已订阅
+                                    </a>
+<a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>8折续费
+                                    </a>
+</div>
+</div>
+</div>
+</div>
+<div class="learning_the_member_box">
+<a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+<div class="left"><img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/><span>您已是超级会员，正在免费阅读会员专享内容</span></div>
+<div class="right"><span>查看更多超级会员权益</span><img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/></div>
+</a>
+</div>
+<article class="baidu_pl">
+<div class="article_content clearfix" id="article_content">
+<link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+<link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+<div class="htmledit_views" id="content_views">
+<p>接前一篇文章：</p>
+<p></p>
+<p>本文内容参考：</p>
+<p>《趣谈<a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">Linux操作系统</a>》 —— 刘超，<a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">极客时间</a></p>
+<p>《<a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">QEMU</a>/KVM》源码解析与应用 —— 李强，机械工业出版社</p>
+<p>特此致谢！</p>
+<p></p>
+<h3>零、序言</h3>
+<p>一晃已经很久（4个多月）没有更新QEMU这个专栏了。并不是本系列已经完结了，也不是笔者不想写、或者已经失去了继续写作的兴趣，乃至失去了对于QEMU的兴趣。相反，笔者无时无刻不在想着继续将此专栏、专题写下去。只是由于自从今年3月初找了个兼职，就一直忙那个兼职的事情；而后又过了一个月，结束了4个多月的空档期，找到了新的全职工作，入职了新公司。无论是兼职还是全职，都是时间紧、任务重，再加上笔者又要备考系统架构师，因此虽然心里一直挂念着QEMU/KVM、挂念着本专栏，也不得不先紧着那几个优先度更高的工作（这才有了笔者后边的STM32音频和SD卡相关的文章，以及新开的ESP32-C3专栏）。现在兼职工作早已中止了，全职工作也基本理出了头绪，而下一次系统架构师的软考要到11月初才开始，因此，这段时间笔者终于有精力回到QEMU/KVM这个专栏，做自己最爱的研究方向了。</p>
+<p>但是同时笔者也遇到了一个切实的问题，那就是由于离开的时间太长了，当初的延续性早已不在，需要一定的时间把之前的状态和节奏找回来。因此，笔者决定暂时不再继续之前没有写完的专题，如Machine或Virtio了（后续逐渐找回当时的进度后再继续），而是进入一个新的专题——CPU虚拟化。这样，一方面能够继续开展对于QEMU/KVM的研究，另一方面又不至于在没有完全找回状态和节奏的时候贸然续写前边的专题而导致很突兀、不完全对得上或完全对不上。</p>
+<h3>一、CPU虚拟化介绍</h3>
+<h4>1. CPU虚拟化简介</h4>
+<p>在物理机中，操作系统也好、应用程序也罢，都是直接运行在硬件上的。以x86 CPU为例，其总共有ring0~ring3四个运行等级。而操作系统中的程序分为两种，即刚才提到的用户态程序（应用程序）和内核态程序（如内核代码、驱动程序等）。为了区分内核态和用户态，就需要把操作系统和应用程序分别对应到ring0~ring3这四个运行等级上。当时写Linux内核的时候，这些“远古大神”们还预料不到未来虚拟机会横空出世、大放异彩，因此他们“很奢侈地”敞开了用，让内核态（操作系统）的代码运行在ring0即第0等级，用户态（应用程序）的代码运行在ring3即第3等级。占了两头，中间的都不用，太不会过日子了，估计后来都得后悔死。</p>
+<p>就这样，如果用户态程序做事情，就将扳手扳到第3等级，一旦要申请使用更多的资源，就要将扳手扳到第0等级。说得更清楚、细致一些，就是：当应用程序需要执行一些敏感操作、访问一些系统资源时，就需要执行特殊的指令陷入到操作系统内核，由内核进行一些安全检查，代替应用程序访问这些资源。能够在ring3即第3等级执行的指令叫作非特权指令，而只能在ring0即第0等级执行的指令叫作特权指令。</p>
+<p>对于指令的划分，还有另一种方法，按照是否会对整个系统产生影响来划分。如果指令会影响到整个系统，则称为敏感指令；如果指令只影响自身所在的进程，则叫作非敏感指令。</p>
+<p>在x86系统中，敏感指令与特权指令并不是完全相同的，存在一些指令属于敏感指令、但不属于特权指令，也就是说用户程序能够运行一些可以改变/获取全局资源的指令。这在物理机上没有什么问题，因为整个宿主机只属于当前这一个操作系统；但在虚拟化情况下就不一样了，虚拟化平台上会运行多个虚拟机，如果其中的操作系统都能够随意地读取/修改全局数据，那么就会十分混乱。因此，传统上有好几种方法来实现虚拟化。</p>
+<ul><li>Bohs与QEMU（不含KVM）类的纯软件模拟严格来讲并不算是虚拟化软件，而应该叫作模拟器，因为它们都是一条一条指令地解析、然后执行的。</li><li>还有一类是VMWare早期的方案，虚拟化用户态的程序直接在CPU上执行，但是一些特权指令会通过动态的二进制翻译去执行。</li><li>紧随其后的是Xen方案，该方案修改了虚拟机操作系统内核的代码，使虚拟机内核运行在ring1，并且对虚拟机中操作系统内核的敏感指令进行替换而使其陷入到ring0的Xen内核。</li></ul>
+<p>很明显各个方案都有缺点。纯软件模拟的性能非常差；Xen方案又只能支持有源码的操作系统；综合来看，VMWare的Workstation相对不错。</p>
+<p>现如今，随着云计算的不断发展，作为其底层支撑技术的虚拟化技术也在飞快发展。Intel和AMD都相继<strong>在硬件层面</strong>支持了虚拟化，包括CPU、内存、磁盘、网卡等常见外设。硬件层面的虚拟化已经是云计算的标配。</p>
+<p></p>
+<p>更多内容请看下回。</p>
+</div>
+</div>
+</article>
+
+</div>
+<div class="directory-boxshadow-dialog" style="display:none;">
+<div class="directory-boxshadow-dialog-box">
+</div>
+<div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+<img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+<div class="vip-limited-time-top">
+        确定要放弃本次机会？
+      </div>
+<span class="vip-limited-time-text">福利倒计时</span>
+<div class="limited-time-box-new">
+<span class="time-hour"></span>
+<i>:</i>
+<span class="time-minite"></span>
+<i>:</i>
+<span class="time-second"></span>
+</div>
+<div class="limited-time-vip-box">
+<p>
+<img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+<span class="def">立减 ¥</span>
+<span class="active limited-num"></span>
+</p>
+<span class="">普通VIP年卡可用</span>
+</div>
+<a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">立即使用</a>
+</div>
+</div> <div class="more-toolbox-new more-toolbar" id="toolBarBox">
+
+</div>
+
+
+<a id="commentBox" name="commentBox"></a>
+<div class="comment-box comment-box-new2 login-comment-box-new" id="pcCommentBox" style="display:none">
+<div class="has-comment" style="display:block">
+<div class="one-line-box">
+<div class="has-comment-tit go-side-comment">
+<span class="count">0</span> 条评论
+          </div>
+<div class="has-comment-con comment-operate-item"></div>
+<a class="has-comment-bt-right go-side-comment focus">写评论</a>
+</div>
+</div>
+</div>
+<div class="first-recommend-box recommend-box recommend-highlight-default">
+<div class="recommend-item-box type_blog clearfix" data-report-view='{"ab":"new","spm":"1001.2101.3001.6661.1","mod":"popu_871","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant_t0.none-task-blog-2~default~OPENSEARCH~Rate-1-140473664-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"1","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140473664"}' data-url="https://phmatthaus.blog.csdn.net/article/details/140473664">
+<div class="content-box">
+<div class="content-blog display-flex">
+<div class="title-box">
+<span class="type">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/blogType.png"/>
+<span class="tip">博客</span>
+</span>
+<a class="tit" data-report-click='{"ab":"new","spm":"1001.2101.3001.6661.1","mod":"popu_871","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant_t0.none-task-blog-2~default~OPENSEARCH~Rate-1-140473664-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"1","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140473664"}' data-report-query="spm=1001.2101.3001.6661.1&amp;utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140473664-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140473664-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140473664" target="_blank">
+<div class="left ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（2）</div>
+</a>
+</div>
+<div class="info-box display-flex">
+<div class="info">
+<a href="https://blog.csdn.net/phmatthaus" target="_blank"><span class="blog-title">phmatthaus的专栏</span></a>
+</div>
+<div class="info display-flex">
+<span class="info-block time">07-16</span>
+<span class="info-block read"><img alt="" class="read-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png"/>
+					352
+					</span>
+</div>
+</div>
+</div>
+<div class="desc-box">
+<a data-report-click='{"ab":"new","spm":"1001.2101.3001.6661.1","mod":"popu_871","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant_t0.none-task-blog-2~default~OPENSEARCH~Rate-1-140473664-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"1","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140473664"}' data-report-query="spm=1001.2101.3001.6661.1&amp;utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140473664-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140473664-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140473664" target="_blank">
+<div class="desc ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（2）</div>
+</a>
+</div>
+</div>
+</div>
+</div>
+
+<div class="second-recommend-box recommend-box recommend-highlight-default">
+<div class="recommend-item-box type_blog clearfix" data-report-view='{"ab":"new","spm":"1001.2101.3001.6650.1","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-1-140827225-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"1","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140827225"}' data-url="https://phmatthaus.blog.csdn.net/article/details/140827225">
+<div class="content-box">
+<div class="content-blog display-flex">
+<div class="title-box">
+<span class="type">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/blogType.png"/>
+<span class="tip">博客</span>
+</span>
+<a class="tit" data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.1","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-1-140827225-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"1","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140827225"}' data-report-query="spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140827225-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140827225-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140827225" target="_blank">
+<div class="left ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（17）</div>
+<div class="tag">最新发布</div>
+</a>
+</div>
+<div class="info-box display-flex">
+<div class="info">
+<a href="https://blog.csdn.net/phmatthaus" target="_blank"><span class="blog-title">phmatthaus的专栏</span></a>
+</div>
+<div class="info display-flex">
+<span class="info-block time">08-01</span>
+<span class="info-block read"><img alt="" class="read-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png"/>
+					401
+					</span>
+</div>
+</div>
+</div>
+<div class="desc-box">
+<a data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.1","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-1-140827225-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"1","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140827225"}' data-report-query="spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140827225-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-1-140827225-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140827225" target="_blank">
+<div class="desc ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（17）</div>
+</a>
+</div>
+</div>
+</div>
+</div>
+<div class="recommend-box insert-baidu-box recommend-highlight-default">
+<div class="recommend-item-box no-index" style="display:none"></div>
+<div class="recommend-item-box type_blog clearfix" data-report-view='{"ab":"new","spm":"1001.2101.3001.6650.2","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-2-140729184-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"2","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140729184"}' data-url="https://phmatthaus.blog.csdn.net/article/details/140729184">
+<div class="content-box">
+<div class="content-blog display-flex">
+<div class="title-box">
+<span class="type">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/blogType.png"/>
+<span class="tip">博客</span>
+</span>
+<a class="tit" data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.2","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-2-140729184-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"2","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140729184"}' data-report-query="spm=1001.2101.3001.6650.2&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-2-140729184-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-2-140729184-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140729184" target="_blank">
+<div class="left ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（12）</div>
+</a>
+</div>
+<div class="info-box display-flex">
+<div class="info">
+<a href="https://blog.csdn.net/phmatthaus" target="_blank"><span class="blog-title">phmatthaus的专栏</span></a>
+</div>
+<div class="info display-flex">
+<span class="info-block time">07-28</span>
+<span class="info-block read"><img alt="" class="read-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png"/>
+					284
+					</span>
+</div>
+</div>
+</div>
+<div class="desc-box">
+<a data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.2","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-2-140729184-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"2","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140729184"}' data-report-query="spm=1001.2101.3001.6650.2&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-2-140729184-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-2-140729184-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140729184" target="_blank">
+<div class="desc ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（12）</div>
+</a>
+</div>
+</div>
+</div>
+<div class="recommend-item-box type_blog clearfix" data-report-view='{"ab":"new","spm":"1001.2101.3001.6650.3","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-3-140778550-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"3","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140778550"}' data-url="https://phmatthaus.blog.csdn.net/article/details/140778550">
+<div class="content-box">
+<div class="content-blog display-flex">
+<div class="title-box">
+<span class="type">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/blogType.png"/>
+<span class="tip">博客</span>
+</span>
+<a class="tit" data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.3","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-3-140778550-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"3","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140778550"}' data-report-query="spm=1001.2101.3001.6650.3&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-3-140778550-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-3-140778550-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140778550" target="_blank">
+<div class="left ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（14）</div>
+</a>
+</div>
+<div class="info-box display-flex">
+<div class="info">
+<a href="https://blog.csdn.net/phmatthaus" target="_blank"><span class="blog-title">phmatthaus的专栏</span></a>
+</div>
+<div class="info display-flex">
+<span class="info-block time">07-30</span>
+<span class="info-block read"><img alt="" class="read-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png"/>
+					225
+					</span>
+</div>
+</div>
+</div>
+<div class="desc-box">
+<a data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.3","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-3-140778550-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"3","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140778550"}' data-report-query="spm=1001.2101.3001.6650.3&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-3-140778550-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-3-140778550-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140778550" target="_blank">
+<div class="desc ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（14）</div>
+</a>
+</div>
+</div>
+</div>
+<dl class="recommend-item-box type_blog clearfix" id="recommend-item-box-tow">
+</dl>
+<div class="recommend-item-box type_blog clearfix" data-report-view='{"ab":"new","spm":"1001.2101.3001.6650.4","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-4-140693982-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"4","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140693982"}' data-url="https://phmatthaus.blog.csdn.net/article/details/140693982">
+<div class="content-box">
+<div class="content-blog display-flex">
+<div class="title-box">
+<span class="type">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/blogType.png"/>
+<span class="tip">博客</span>
+</span>
+<a class="tit" data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.4","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-4-140693982-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"4","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140693982"}' data-report-query="spm=1001.2101.3001.6650.4&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-4-140693982-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-4-140693982-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140693982" target="_blank">
+<div class="left ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（10）</div>
+</a>
+</div>
+<div class="info-box display-flex">
+<div class="info">
+<a href="https://blog.csdn.net/phmatthaus" target="_blank"><span class="blog-title">phmatthaus的专栏</span></a>
+</div>
+<div class="info display-flex">
+<span class="info-block time">07-26</span>
+<span class="info-block read"><img alt="" class="read-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png"/>
+					190
+					</span>
+</div>
+</div>
+</div>
+<div class="desc-box">
+<a data-report-click='{"ab":"new","spm":"1001.2101.3001.6650.4","mod":"popu_387","extra":"{\"highlightScore\":0.0,\"utm_medium\":\"distribute.pc_relevant.none-task-blog-2~default~OPENSEARCH~Rate-4-140693982-blog-140407229.235^v43^control\",\"dist_request_id\":\"1735283653383_36725\"}","dist_request_id":"1735283653383_36725","ab_strategy":"vipdefault","index":"4","strategy":"2~default~OPENSEARCH~Rate","dest":"https://phmatthaus.blog.csdn.net/article/details/140693982"}' data-report-query="spm=1001.2101.3001.6650.4&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-4-140693982-blog-140407229.235%5Ev43%5Econtrol&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7ERate-4-140693982-blog-140407229.235%5Ev43%5Econtrol" href="https://phmatthaus.blog.csdn.net/article/details/140693982" target="_blank">
+<div class="desc ellipsis-online ellipsis-online-1"><em>QEMU</em><em>源码</em><em>全</em><em>解析</em> —— <em>CPU</em><em>虚拟化</em>（10）</div>
+</a>
+</div>
+</div>
+</div>
+</div>
+<div class="blog-footer-bottom" style="margin-top:10px;"></div>
+
+ </main>
+
+
+
+ </div>
+<div class="recommend-right align-items-stretch clearfix" data-type="recommend" id="rightAside">
+
+</div>
+<div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+
+</div>
+</div>
+<div class="mask-dark"></div>
+<div class="skin-boxshadow"></div>
+<div class="directory-boxshadow"></div>
+<div class="comment-side-box-shadow comment-side-tit-close" id="commentSideBoxshadow">
+<div class="comment-side-content">
+<div class="comment-side-tit">
+<span class="comment-side-tit-count">评论</span>
+<img class="comment-side-tit-close" src="https://csdnimg.cn/release/blogv2/dist/pc/img/closeBt.png"/></div>
+<div class="comment-box comment-box-new2" id="pcCommentSideBox" style="display:block">
+<div class="comment-edit-box d-flex">
+<div class="user-img">
+
+</div>
+<form id="commentform">
+<textarea class="comment-content" id="comment_content" maxlength="1000" name="comment_content" placeholder="欢迎高质量的评论，低质的评论会被折叠"></textarea>
+<div class="comment-reward-box" style="background-image: url('https://img-home.csdnimg.cn/images/20230131025301.png');">
+<a class="btn-remove-reward"></a>
+<div class="form-reward-box">
+<div class="info">
+              成就一亿技术人!
+            </div>
+<div class="price-info">
+              拼手气红包<span class="price">6.0元</span>
+</div>
+</div>
+</div>
+<div class="comment-operate-box">
+<div class="comment-operate-l">
+<span class="tip" id="tip_comment">还能输入<em>1000</em>个字符</span>
+</div>
+<div class="comment-operate-c">
+             
+          </div>
+<div class="comment-operate-r">
+<div class="comment-operate-item comment-reward">
+<img alt="红包" class="comment-operate-img" data-url="https://csdnimg.cn/release/blogv2/dist/pc/img/" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentReward.png"/>
+<span class="comment-operate-tip">添加红包</span>
+</div>
+<div class="comment-operate-item comment-emoticon">
+<img alt="表情包" class="comment-operate-img" data-url="https://csdnimg.cn/release/blogv2/dist/pc/img/" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentEmotionIcon.png"/>
+<span class="comment-operate-tip">插入表情</span>
+<div class="comment-emoticon-box comment-operate-isshow">
+<div class="comment-emoticon-img-box"></div>
+</div>
+</div>
+<div class="comment-operate-item comment-code">
+<img alt="表情包" class="comment-operate-img" data-url="https://csdnimg.cn/release/blogv2/dist/pc/img/" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentCodeIcon.png"/>
+<span class="comment-operate-tip">代码片</span>
+<div class="comment-code-box comment-operate-isshow">
+<ul id="commentCode">
+<li><a data-code="html">HTML/XML</a></li>
+<li><a data-code="objc">objective-c</a></li>
+<li><a data-code="ruby">Ruby</a></li>
+<li><a data-code="php">PHP</a></li>
+<li><a data-code="csharp">C</a></li>
+<li><a data-code="cpp">C++</a></li>
+<li><a data-code="javascript">JavaScript</a></li>
+<li><a data-code="python">Python</a></li>
+<li><a data-code="java">Java</a></li>
+<li><a data-code="css">CSS</a></li>
+<li><a data-code="sql">SQL</a></li>
+<li><a data-code="plain">其它</a></li>
+</ul>
+</div>
+</div>
+<div class="comment-operate-item">
+<input id="comment_replyId" name="comment_replyId" type="hidden"/>
+<input id="article_id" name="article_id" type="hidden" value="140407229"/>
+<input id="comment_userId" name="comment_userId" type="hidden" value=""/>
+<input id="commentId" name="commentId" type="hidden" value=""/>
+<a data-report-click='{"mod":"1582594662_003","spm":"1001.2101.3001.4227","ab":"new"}'>
+<input class="btn-comment btn-comment-input" type="submit" value="评论"/>
+</a>
+</div>
+</div>
+</div>
+</form>
+</div>
+<div class="comment-list-container">
+<div class="comment-list-box comment-operate-item">
+</div>
+<div class="look-flod-comment" id="lookFlodComment">
+<span class="count"></span> 条评论被折叠 <a class="look-more-flodcomment">查看</a>
+</div>
+<div class="opt-box text-center">
+<div class="btn btn-sm btn-link-blue" id="btnMoreComment"></div>
+</div>
+</div>
+</div>
+<div class="pc-flodcomment-sidebox" id="pcFlodCommentSideBox">
+<div class="comment-fold-tit"><span class="back" id="lookUnFlodComment"><img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentArrowLeftWhite.png"/></span>被折叠的 <span class="count"></span> 条评论
+		 <a class="tip" href="https://blogdev.blog.csdn.net/article/details/122245662" target="_blank">为什么被折叠?</a>
+<a class="park" href="https://bbs.csdn.net/forums/FreeZone" target="_blank">
+<img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconPark.png"/>到【灌水乐园】发言</a>
+</div>
+<div class="comment-fold-content"></div>
+<div class="look-bad-comment side-look-comment" id="lookBadComment">
+<a class="look-more-comment">查看更多评论<img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentArrowDownWhite.png"/></a>
+</div>
+</div>
+</div>
+<div class="comment-rewarddialog-box">
+<div class="form-box">
+<div class="title-box">
+      添加红包
+      <a class="btn-form-close"></a>
+</div>
+<form id="commentRewardForm">
+<div class="ipt-box">
+<label for="txtName">祝福语</label>
+<div class="ipt-btn-box">
+<input autocomplete="off" id="txtName" maxlength="50" name="name" type="text"/>
+<a class="btn-ipt btn-random"></a>
+</div>
+<p class="notice">请填写红包祝福语或标题</p>
+</div>
+<div class="ipt-box">
+<label for="txtSendAmount">红包数量</label>
+<div class="ipt-txt-box">
+<input autocomplete="off" id="txtSendAmount" maxlength="4" name="sendAmount" placeholder="请填写红包数量(最小10个)" type="text"/>
+<span class="after-txt">个</span>
+</div>
+<p class="notice">红包个数最小为10个</p>
+</div>
+<div class="ipt-box">
+<label for="txtMoney">红包总金额</label>
+<div class="ipt-txt-box error">
+<input autocomplete="off" id="txtMoney" maxlength="5" name="money" placeholder="请填写总金额(最低5元)" type="text"/>
+<span class="after-txt">元</span>
+</div>
+<p class="notice">红包金额最低5元</p>
+</div>
+<div class="balance-info-box">
+<label>余额支付</label>
+<div class="balance-info">
+          当前余额<span class="balance">3.43</span>元
+          <a class="link-charge" href="https://i.csdn.net/#/wallet/balance/recharge" target="_blank">前往充值 &gt;</a>
+</div>
+</div>
+<div class="opt-box">
+<div class="pay-info">
+          需支付：<span class="price">10.00</span>元
+        </div>
+<button class="ml-auto btn-cancel" type="button">取消</button>
+<button class="ml8 btn-submit" disabled="true" type="button">确定</button>
+</div>
+</form>
+</div>
+</div>
+<div class="rr-guide-box">
+<div class="rr-first-box">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward02.png"/>
+<button class="btn-guide-known next">下一步</button>
+</div>
+<div class="rr-second-box">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward03.png"/>
+<button class="btn-guide-known known">知道了</button>
+</div>
+</div>
+</div>
+<div class="redEnvolope" id="redEnvolope">
+<div class="env-box">
+<div class="env-container">
+<div class="pre-open" id="preOpen">
+<div class="top">
+<header>
+<img :src="redpacketAuthor.avatar" alt="" class="clearTpaErr">
+<div class="author">成就一亿技术人!</div>
+</img></header>
+<div class="bot-icon"></div>
+</div>
+<footer>
+<div class="red-openbtn open-start"></div>
+<div class="tip">
+            领取后你会自动成为博主和红包主的粉丝
+            <a class="rule" target="_blank">规则</a>
+</div>
+</footer>
+</div>
+<div class="opened" id="opened">
+<div class="bot-icon">
+<header>
+<a class="creatorUrl" href="" target="_blank">
+<img alt="" class="clearTpaErr" src="https://profile-avatar.csdnimg.cn/default.jpg!2">
+</img></a>
+<div class="author">
+<div class="tt">hope_wisdom</div> 发出的红包
+            </div>
+</header>
+</div>
+<div class="receive-box">
+<header></header>
+<div class="receive-list">
+</div>
+</div>
+</div>
+</div>
+<div class="close-btn"></div>
+</div>
+</div>
+<div class="reward-popupbox-new" id="rewardNew">
+<p class="rewad-title">打赏作者<span class="reward-close"><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/closeBt.png"/></span></p>
+<dl class="profile-box">
+<dd>
+<a data-report-click='{"mod":"popu_379","dest":"https://phmatthaus.blog.csdn.net","ab":"new"}' href="https://phmatthaus.blog.csdn.net">
+<img class="avatar_pic" src="https://profile-avatar.csdnimg.cn/46a9a1c4beee44079d3bc167b2c63fbc_phmatthaus.jpg!1"/>
+</a>
+</dd>
+<dt>
+<p class="blog-name">蓝天居士</p>
+<p class="blog-discript">你的鼓励将是我创作的最大动力</p>
+</dt>
+</dl>
+<div class="reward-box-new">
+<div class="reward-content"><div class="reward-right"></div></div>
+</div>
+<div class="money-box">
+<span class="choose-money choosed" data-id="1">¥1</span>
+<span class="choose-money" data-id="2">¥2</span>
+<span class="choose-money" data-id="4">¥4</span>
+<span class="choose-money" data-id="6">¥6</span>
+<span class="choose-money" data-id="10">¥10</span>
+<span class="choose-money" data-id="20">¥20</span>
+</div>
+<div class="sure-box">
+<div class="sure-box-money">
+<div class="code-box">
+<div class="code-num-box">
+<span class="code-name">扫码支付：</span><span class="code-num">¥1</span>
+</div>
+<div class="code-img-box">
+<div class="renovate">
+<img src="https://csdnimg.cn/release/blogv2/dist/pc/img/pay-time-out.png"/>
+<span>获取中</span>
+</div>
+</div>
+<div class="code-pay-box">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newWeiXin.png"/>
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newZhiFuBao.png"/>
+<span>扫码支付</span>
+</div>
+</div>
+</div>
+<div class="sure-box-blance">
+<p class="tip">您的余额不足，请更换扫码支付或<a class="go-invest" data-report-click='{"mod":"1597646289_003","spm":"1001.2101.3001.4302"}' href="https://i.csdn.net/#/wallet/balance/recharge?utm_source=RewardVip" target="_blank">充值</a></p>
+<p class="is-have-money"><a class="reward-sure">打赏作者</a></p>
+</div>
+</div>
+</div>
+<div class="pay-code">
+<div class="pay-money">实付<span class="pay-money-span" data-nowprice="" data-oldprice="">元</span></div>
+<div class="content-blance"><a class="blance-bt" href="javascript:;">使用余额支付</a></div>
+<div class="content-code">
+<div data-id="" id="payCode">
+<div class="renovate">
+<img src="https://csdnimg.cn/release/blogv2/dist/pc/img/pay-time-out.png"/>
+<span>点击重新获取</span>
+</div>
+</div>
+<div class="pay-style"><span><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/weixin.png"/></span><span><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/zhifubao.png"/></span><span><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/jingdong.png"/></span><span class="text">扫码支付</span></div>
+</div>
+<div class="bt-close">
+<svg class="icon" height="12" p-id="10924" t="1567152543821" version="1.1" viewbox="0 0 1024 1024" width="12" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs>
+<style type="text/css"></style>
+</defs>
+<path d="M512 438.378667L806.506667 143.893333a52.032 52.032 0 1 1 73.6 73.621334L585.621333 512l294.485334 294.485333a52.074667 52.074667 0 0 1-73.6 73.642667L512 585.621333 217.514667 880.128a52.053333 52.053333 0 1 1-73.621334-73.642667L438.378667 512 143.893333 217.514667a52.053333 52.053333 0 1 1 73.621334-73.621334L512 438.378667z" fill="" p-id="10925"></path>
+</svg>
+</div>
+<div class="pay-balance">
+<input class="pay-code-radio" data-type="details" type="radio"/>
+<span class="span">钱包余额</span>
+<span class="balance" style="color:#FC5531;font-size:14px;">0</span>
+<div class="pay-code-tile">
+<img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/pay-help.png"/>
+<div class="pay-code-content">
+<div class="span">
+<p class="title">抵扣说明：</p>
+<p> 1.余额是钱包充值的虚拟货币，按照1:1的比例进行支付金额的抵扣。<br/> 2.余额无法直接购买下载，可以购买VIP、付费专栏及课程。</p>
+</div>
+</div>
+</div>
+</div>
+<a class="pay-balance-con" href="https://i.csdn.net/#/wallet/balance/recharge" target="_blank"><img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/recharge.png"/><span>余额充值</span></a>
+</div>
+
+<div class="keyword-dec-box" id="keywordDecBox"></div>
+</link></link></body>
+<!-- 富文本柱状图  -->
+<link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+
+
+
+
+
+
+
+<link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+<link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+
+
+
+
+
+
+
+
+
+
+
+  &gt;
+    
+
+
+
+
+</link></html>

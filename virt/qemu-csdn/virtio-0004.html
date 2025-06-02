@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/134952445" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— virtio（4）_balloon scsi crypto-CSDN博客
+     </title>
+     <meta content="balloon scsi crypto" name="keywords"/>
+     <meta content='{"autorun":true,"install":true,"keyword":"balloon scsi crypto"}' name="csdn-baidu-search"/>
+     <meta content="文章浏览阅读1.2k次，点赞25次，收藏17次。本文详细解析QEMU中的virtio设备，包括virtio balloon、virtio scsi和virtio crypto，通过源码分析这些设备在系统中的实现机制。文章介绍了各设备的定义位置和关联的PCI设备，并展示了相关数据结构的关系图。" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-850e130245.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— virtio（4）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2025-02-08 20:34:18 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量1.2k
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+                17
+               </span>
+              </a>
+              <div class="read-count-box is-like">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+                            25
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072873.html" rel="noopener" target="_blank">
+              KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"virtio","ab":"new","extra":"{\"searchword\":\"virtio\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"virtio","ab":"new","extra":"{\"searchword\":\"virtio\"}"}' href="https://so.csdn.net/so/search/s.do?q=virtio&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              virtio
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2023-12-13 08:22:18 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/134952445" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/134952445
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div id="blogHuaweiyunAdvert">
+        </div>
+        <div id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec more">
+                同时被 2 个专栏收录
+                <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newArrowDown1White.png"/>
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             160 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+          <div class="column-group-item column-group1">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072873.html" target="_blank" title="KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                KVM
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             88 篇文章
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-bt articleColumnFreeBt" data-id="12072873">
+             订阅专栏
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <div class="ai-abstract-box">
+         <div class="ai-abstract">
+          <div class="abstract-content">
+           <img alt="" class="lock-img" src="https://img-home.csdnimg.cn/images/20240711042549.png"/>
+           本文详细解析QEMU中的virtio设备，包括virtio balloon、virtio scsi和virtio crypto，通过源码分析这些设备在系统中的实现机制。文章介绍了各设备的定义位置和关联的PCI设备，并展示了相关数据结构的关系图。
+          </div>
+          <span>
+           摘要由CSDN通过智能技术生成
+          </span>
+         </div>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views" id="content_views">
+           <p>
+            接前一篇文章：
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM》源码解析与应用 —— 李强，机械工业出版社
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <p>
+            上一回开始正式结合代码讲解virtio的实现机制和细节。首先给出了virtio PCI代理设备类型的定义，以及其下的一些virtio设备，如virtio balloon PCI设备、virtio scsi PCI设备以及virtio crypto PCI设备。并且给出了virtio设备在系统的设备树中的位置，如下图所示：
+           </p>
+           <p>
+            <img src="https://i-blog.csdnimg.cn/blog_migrate/f8f27718eb2a4a478c6b5489dc09cc17.png"/>
+           </p>
+           <p>
+            由上图可见，所有的virtio设备都有一个共同的父类TYPE_VIRTIO_DEVICE。例如：
+           </p>
+           <ul>
+            <li>
+             virtual balloon设备
+            </li>
+           </ul>
+           <p>
+            virtual balloon设备的定义如下（hw/virtio/virtio-balloon.c中）：
+           </p>
+           <pre><code class="language-cpp">static const TypeInfo virtio_balloon_info = {
+    .name = TYPE_VIRTIO_BALLOON,
+    .parent = TYPE_VIRTIO_DEVICE,
+    .instance_size = sizeof(VirtIOBalloon),
+    .instance_init = virtio_balloon_instance_init,
+    .class_init = virtio_balloon_class_init,
+};
+
+static void virtio_register_types(void)
+{
+    type_register_static(&amp;virtio_balloon_info);
+}
+
+type_init(virtio_register_types)
+</code></pre>
+           <blockquote>
+            <p>
+             关联：
+            </p>
+            <ul>
+             <li>
+              virtio balloon PCI设备
+             </li>
+            </ul>
+            <p>
+             virtio balloon PCI设备的定义在hw/virtio/virtio-balloon-pci.c中，代码如下：
+            </p>
+            <pre><code class="language-cpp">static const VirtioPCIDeviceTypeInfo virtio_balloon_pci_info = {
+    .base_name             = TYPE_VIRTIO_BALLOON_PCI,
+    .generic_name          = "virtio-balloon-pci",
+    .transitional_name     = "virtio-balloon-pci-transitional",
+    .non_transitional_name = "virtio-balloon-pci-non-transitional",
+    .instance_size = sizeof(VirtIOBalloonPCI),
+    .instance_init = virtio_balloon_pci_instance_init,
+    .class_init    = virtio_balloon_pci_class_init,
+};
+ 
+static void virtio_balloon_pci_register(void)
+{
+    virtio_pci_types_register(&amp;virtio_balloon_pci_info);
+}
+ 
+type_init(virtio_balloon_pci_register)</code></pre>
+           </blockquote>
+           <ul>
+            <li>
+             virtual scsi设备
+            </li>
+           </ul>
+           <p>
+            virtual scsi设备的定义如下（hw/virtio/virtio-scsi.c中）：
+           </p>
+           <pre><code class="language-cpp">static const TypeInfo virtio_scsi_info = {
+    .name = TYPE_VIRTIO_SCSI,
+    .parent = TYPE_VIRTIO_SCSI_COMMON,
+    .instance_size = sizeof(VirtIOSCSI),
+    .class_init = virtio_scsi_class_init,
+    .interfaces = (InterfaceInfo[]) {
+        { TYPE_HOTPLUG_HANDLER },
+        { }
+    }
+};
+
+static void virtio_register_types(void)
+{
+    type_register_static(&amp;virtio_scsi_common_info);
+    type_register_static(&amp;virtio_scsi_info);
+}
+
+type_init(virtio_register_types)
+</code></pre>
+           <blockquote>
+            <p>
+             关联：
+            </p>
+            <ul>
+             <li>
+              virtio scsi PCI设备
+             </li>
+            </ul>
+            <p>
+             virtio scsi PCI设备的定义在hw/virtio/virtio-scsi-pci.c中，代码如下：
+            </p>
+            <pre><code class="language-cpp">static const VirtioPCIDeviceTypeInfo virtio_scsi_pci_info = {
+    .base_name              = TYPE_VIRTIO_SCSI_PCI,
+    .generic_name           = "virtio-scsi-pci",
+    .transitional_name      = "virtio-scsi-pci-transitional",
+    .non_transitional_name  = "virtio-scsi-pci-non-transitional",
+    .instance_size = sizeof(VirtIOSCSIPCI),
+    .instance_init = virtio_scsi_pci_instance_init,
+    .class_init    = virtio_scsi_pci_class_init,
+};
+ 
+static void virtio_scsi_pci_register(void)
+{
+    virtio_pci_types_register(&amp;virtio_scsi_pci_info);
+}
+ 
+type_init(virtio_scsi_pci_register)</code></pre>
+           </blockquote>
+           <ul>
+            <li>
+             virtual crypto设备
+            </li>
+           </ul>
+           <p>
+            virtual crypto设备的定义如下（hw/virtio/virtio-crypto.c中）：
+           </p>
+           <pre><code class="language-cpp">static const TypeInfo virtio_crypto_info = {
+    .name = TYPE_VIRTIO_CRYPTO,
+    .parent = TYPE_VIRTIO_DEVICE,
+    .instance_size = sizeof(VirtIOCrypto),
+    .instance_init = virtio_crypto_instance_init,
+    .class_init = virtio_crypto_class_init,
+};
+
+static void virtio_register_types(void)
+{
+    type_register_static(&amp;virtio_crypto_info);
+}
+
+type_init(virtio_register_types)</code></pre>
+           <blockquote>
+            <p>
+             关联：
+            </p>
+            <ul>
+             <li>
+              virtio crypto PCI设备
+             </li>
+            </ul>
+            <p>
+             virtio crypto PCI设备的定义在hw/virtio/virtio-crypto-pci.c中，代码如下：
+            </p>
+            <pre><code class="language-cpp">static const VirtioPCIDeviceTypeInfo virtio_crypto_pci_info = {
+    .generic_name  = TYPE_VIRTIO_CRYPTO_PCI,
+    .instance_size = sizeof(VirtIOCryptoPCI),
+    .instance_init = virtio_crypto_initfn,
+    .class_init    = virtio_crypto_pci_class_init,
+};
+ 
+static void virtio_crypto_pci_register_types(void)
+{
+    virtio_pci_types_register(&amp;virtio_crypto_pci_info);
+}
+type_init(virtio_crypto_pci_register_types)</code></pre>
+           </blockquote>
+           <p>
+            上边各设备（包括上一回的virtio PCI代理设备）都使用了TypeInfo，该结构的定义在include/qom/object.h中，代码如下：
+           </p>
+           <pre><code class="language-cpp">/**
+ * struct TypeInfo:
+ * @name: The name of the type.
+ * @parent: The name of the parent type.
+ * @instance_size: The size of the object (derivative of #Object).  If
+ *   @instance_size is 0, then the size of the object will be the size of the
+ *   parent object.
+ * @instance_align: The required alignment of the object.  If @instance_align
+ *   is 0, then normal malloc alignment is sufficient; if non-zero, then we
+ *   must use qemu_memalign for allocation.
+ * @instance_init: This function is called to initialize an object.  The parent
+ *   class will have already been initialized so the type is only responsible
+ *   for initializing its own members.
+ * @instance_post_init: This function is called to finish initialization of
+ *   an object, after all @instance_init functions were called.
+ * @instance_finalize: This function is called during object destruction.  This
+ *   is called before the parent @instance_finalize function has been called.
+ *   An object should only free the members that are unique to its type in this
+ *   function.
+ * @abstract: If this field is true, then the class is considered abstract and
+ *   cannot be directly instantiated.
+ * @class_size: The size of the class object (derivative of #ObjectClass)
+ *   for this object.  If @class_size is 0, then the size of the class will be
+ *   assumed to be the size of the parent class.  This allows a type to avoid
+ *   implementing an explicit class type if they are not adding additional
+ *   virtual functions.
+ * @class_init: This function is called after all parent class initialization
+ *   has occurred to allow a class to set its default virtual method pointers.
+ *   This is also the function to use to override virtual methods from a parent
+ *   class.
+ * @class_base_init: This function is called for all base classes after all
+ *   parent class initialization has occurred, but before the class itself
+ *   is initialized.  This is the function to use to undo the effects of
+ *   memcpy from the parent class to the descendants.
+ * @class_data: Data to pass to the @class_init,
+ *   @class_base_init. This can be useful when building dynamic
+ *   classes.
+ * @interfaces: The list of interfaces associated with this type.  This
+ *   should point to a static array that's terminated with a zero filled
+ *   element.
+ */
+struct TypeInfo
+{
+    const char *name;
+    const char *parent;
+
+    size_t instance_size;
+    size_t instance_align;
+    void (*instance_init)(Object *obj);
+    void (*instance_post_init)(Object *obj);
+    void (*instance_finalize)(Object *obj);
+
+    bool abstract;
+    size_t class_size;
+
+    void (*class_init)(ObjectClass *klass, void *data);
+    void (*class_base_init)(ObjectClass *klass, void *data);
+    void *class_data;
+
+    InterfaceInfo *interfaces;
+};
+</code></pre>
+           <p>
+            以virtio balloon设备为例。为了便于理解，再次贴出源码，分别在hw/virtio/virtio-balloon-pci.c和hw/virtio/virtio-balloon.c中，如下：
+           </p>
+           <pre><code class="language-cpp">static const VirtioPCIDeviceTypeInfo virtio_balloon_pci_info = {
+    .base_name             = TYPE_VIRTIO_BALLOON_PCI,
+    .generic_name          = "virtio-balloon-pci",
+    .transitional_name     = "virtio-balloon-pci-transitional",
+    .non_transitional_name = "virtio-balloon-pci-non-transitional",
+    .instance_size = sizeof(VirtIOBalloonPCI),
+    .instance_init = virtio_balloon_pci_instance_init,
+    .class_init    = virtio_balloon_pci_class_init,
+};
+ 
+static void virtio_balloon_pci_register(void)
+{
+    virtio_pci_types_register(&amp;virtio_balloon_pci_info);
+}
+ 
+type_init(virtio_balloon_pci_register)</code></pre>
+           <pre><code class="language-cpp">static const TypeInfo virtio_balloon_info = {
+    .name = TYPE_VIRTIO_BALLOON,
+    .parent = TYPE_VIRTIO_DEVICE,
+    .instance_size = sizeof(VirtIOBalloon),
+    .instance_init = virtio_balloon_instance_init,
+    .class_init = virtio_balloon_class_init,
+};
+
+static void virtio_register_types(void)
+{
+    type_register_static(&amp;virtio_balloon_info);
+}
+
+type_init(virtio_register_types)
+</code></pre>
+           <p>
+            VirtIOBalloonPCI的定义在hw/virtio/virtio-balloon-pci.c中，如下：
+           </p>
+           <pre><code class="language-cpp">typedef struct VirtIOBalloonPCI VirtIOBalloonPCI;</code></pre>
+           <p>
+            struct VirtIOBalloonPCI的定义也在hw/virtio/virtio-balloon-pci.c中，如下：
+           </p>
+           <pre><code class="language-cpp">struct VirtIOBalloonPCI {
+    VirtIOPCIProxy parent_obj;
+    VirtIOBalloon vdev;
+};</code></pre>
+           <p>
+            VirtIOPCIProxy的定义在include/hw/virtio/virtio-pci.h中，如下：
+           </p>
+           <pre><code class="language-cpp">/*
+ * virtio-pci: This is the PCIDevice which has a virtio-pci-bus.
+ */
+#define TYPE_VIRTIO_PCI "virtio-pci"
+OBJECT_DECLARE_TYPE(VirtIOPCIProxy, VirtioPCIClass, VIRTIO_PCI)</code></pre>
+           <p>
+            struct VirtIOPCIProxy的定义也在include/hw/virtio/virtio-pci.h中，如下：
+           </p>
+           <pre><code class="language-cpp">struct VirtIOPCIProxy {
+    PCIDevice pci_dev;
+    MemoryRegion bar;
+    union {
+        struct {
+            VirtIOPCIRegion common;
+            VirtIOPCIRegion isr;
+            VirtIOPCIRegion device;
+            VirtIOPCIRegion notify;
+            VirtIOPCIRegion notify_pio;
+        };
+        VirtIOPCIRegion regs[5];
+    };
+    MemoryRegion modern_bar;
+    MemoryRegion io_bar;
+    uint32_t legacy_io_bar_idx;
+    uint32_t msix_bar_idx;
+    uint32_t modern_io_bar_idx;
+    uint32_t modern_mem_bar_idx;
+    int config_cap;
+    uint32_t flags;
+    bool disable_modern;
+    bool ignore_backend_features;
+    OnOffAuto disable_legacy;
+    /* Transitional device id */
+    uint16_t trans_devid;
+    uint32_t class_code;
+    uint32_t nvectors;
+    uint32_t dfselect;
+    uint32_t gfselect;
+    uint32_t guest_features[2];
+    VirtIOPCIQueue vqs[VIRTIO_QUEUE_MAX];
+
+    VirtIOIRQFD *vector_irqfd;
+    int nvqs_with_notifiers;
+    VirtioBusState bus;
+};</code></pre>
+           <p>
+            VirtIOBalloon的定义在include/hw/virtio/virtio-balloon.h中，如下：
+           </p>
+           <pre><code class="language-cpp">#define TYPE_VIRTIO_BALLOON "virtio-balloon-device"
+OBJECT_DECLARE_SIMPLE_TYPE(VirtIOBalloon, VIRTIO_BALLOON)</code></pre>
+           <p>
+            struct VirtIOBalloon的定义也在include/hw/virtio/virtio-balloon.h中，如下：
+           </p>
+           <pre><code class="language-cpp">struct VirtIOBalloon {
+    VirtIODevice parent_obj;
+    VirtQueue *ivq, *dvq, *svq, *free_page_vq, *reporting_vq;
+    uint32_t free_page_hint_status;
+    uint32_t num_pages;
+    uint32_t actual;
+    uint32_t free_page_hint_cmd_id;
+    uint64_t stats[VIRTIO_BALLOON_S_NR];
+    VirtQueueElement *stats_vq_elem;
+    size_t stats_vq_offset;
+    QEMUTimer *stats_timer;
+    IOThread *iothread;
+    QEMUBH *free_page_bh;
+    /*
+     * Lock to synchronize threads to access the free page reporting related
+     * fields (e.g. free_page_hint_status).
+     */
+    QemuMutex free_page_lock;
+    QemuCond  free_page_cond;
+    /*
+     * Set to block iothread to continue reading free page hints as the VM is
+     * stopped.
+     */
+    bool block_iothread;
+    NotifierWithReturn free_page_hint_notify;
+    int64_t stats_last_update;
+    int64_t stats_poll_interval;
+    uint32_t host_features;
+
+    bool qemu_4_0_config_size;
+    uint32_t poison_val;
+};
+</code></pre>
+           <p>
+            virtio balloon设备的实例对象为VirtIOBalloon。具体的virtio设备、virtio PCI代理设备、virtio公共设备的关系如下图所示：
+           </p>
+           <p>
+            <img src="https://i-blog.csdnimg.cn/blog_migrate/f6fdc04cd34faf554025fbf1ee02bc5c.png"/>
+           </p>
+           <p>
+            上图显示了virtio balloon设备对应的几个数据结构及其关系。VirtIOBalloonPCI是virtio balloon PCI代理设备的实例对象，其中包括两个部分：一个是VirtIOPCIProxy，这是virtio PCI代理设备的通用结构，里边存放了具体virtio PCI代理设备的相关成员；另一个是VirtIOBalloon，此结构中存放的是virtio balloon设备的相关数据。其第一个成员是VirtIODevice，也即virtio公共设备的实例对象。VirtIOBalloon剩下的成员是与virtio balloon设备相关的数据。
+           </p>
+           <p>
+           </p>
+           <p>
+            欲知后事如何，且看下回分解。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

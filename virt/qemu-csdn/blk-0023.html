@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/147518722" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 块设备虚拟化（23）_qemukvm源码解析与应用 pdf-CSDN博客
+     </title>
+     <meta content="qemukvm源码解析与应用 pdf" name="keywords"/>
+     <meta content='{"autorun":true,"install":true,"keyword":"qemukvm源码解析与应用 pdf"}' name="csdn-baidu-search"/>
+     <meta content="文章浏览阅读316次。QEMU源码全解析 —— 块设备虚拟化（23）_qemukvm源码解析与应用 pdf" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-72afa20676.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 块设备虚拟化（23）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCurrentTime2.png"/>
+             <span class="time">
+              于 2025-04-26 18:32:47 发布
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量316
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like" data-type="top">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+                            12
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/147518722" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/147518722
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="" id="blogHuaweiyunAdvert">
+        </div>
+        <div class="" id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             172 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views atom-one-light" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/147466189" title="QEMU源码全解析 —— 块设备虚拟化（22）">
+             QEMU源码全解析 —— 块设备虚拟化（22）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h3>
+            QEMU启动过程中的块设备虚拟化
+           </h3>
+           <p>
+            上一回解析了qcow2格式对应的qcow2_open函数，本回解析raw格式对应的raw_open函数。
+           </p>
+           <p>
+            raw_open函数在block/raw-format.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">static int raw_open(BlockDriverState *bs, QDict *options, int flags,
+                    Error **errp)
+{
+    BDRVRawState *s = bs-&gt;opaque;
+    AioContext *ctx;
+    bool has_size;
+    uint64_t offset, size;
+    BdrvChildRole file_role;
+    int ret;
+
+    ret = raw_read_options(options, &amp;offset, &amp;has_size, &amp;size, errp);
+    if (ret &lt; 0) {
+        return ret;
+    }
+
+    /*
+     * Without offset and a size limit, this driver behaves very much
+     * like a filter.  With any such limit, it does not.
+     */
+    if (offset || has_size) {
+        file_role = BDRV_CHILD_DATA | BDRV_CHILD_PRIMARY;
+    } else {
+        file_role = BDRV_CHILD_FILTERED | BDRV_CHILD_PRIMARY;
+    }
+
+    bdrv_open_child(NULL, options, "file", bs, &amp;child_of_bds,
+                    file_role, false, errp);
+    if (!bs-&gt;file) {
+        return -EINVAL;
+    }
+
+    bs-&gt;sg = bdrv_is_sg(bs-&gt;file-&gt;bs);
+    bs-&gt;supported_write_flags = BDRV_REQ_WRITE_UNCHANGED |
+        (BDRV_REQ_FUA &amp; bs-&gt;file-&gt;bs-&gt;supported_write_flags);
+    bs-&gt;supported_zero_flags = BDRV_REQ_WRITE_UNCHANGED |
+        ((BDRV_REQ_FUA | BDRV_REQ_MAY_UNMAP | BDRV_REQ_NO_FALLBACK) &amp;
+            bs-&gt;file-&gt;bs-&gt;supported_zero_flags);
+    bs-&gt;supported_truncate_flags = bs-&gt;file-&gt;bs-&gt;supported_truncate_flags &amp;
+                                   BDRV_REQ_ZERO_WRITE;
+
+    if (bs-&gt;probed &amp;&amp; !bdrv_is_read_only(bs)) {
+        bdrv_refresh_filename(bs-&gt;file-&gt;bs);
+        fprintf(stderr,
+                "WARNING: Image format was not specified for '%s' and probing "
+                "guessed raw.\n"
+                "         Automatically detecting the format is dangerous for "
+                "raw images, write operations on block 0 will be restricted.\n"
+                "         Specify the 'raw' format explicitly to remove the "
+                "restrictions.\n",
+                bs-&gt;file-&gt;bs-&gt;filename);
+    }
+
+    ctx = bdrv_get_aio_context(bs);
+    aio_context_acquire(ctx);
+    ret = raw_apply_options(bs, s, offset, has_size, size, errp);
+    aio_context_release(ctx);
+
+    if (ret &lt; 0) {
+        return ret;
+    }
+
+    if (bdrv_is_sg(bs) &amp;&amp; (s-&gt;offset || s-&gt;has_size)) {
+        error_setg(errp, "Cannot use offset/size with SCSI generic devices");
+        return -EINVAL;
+    }
+
+    return 0;
+}</code></pre>
+           <p>
+            raw_open函数和qcow2_open函数机制不同，其中并没有协程。
+           </p>
+           <p>
+            核心代码段为：
+           </p>
+           <pre><code class="language-cpp">    bdrv_open_child(NULL, options, "file", bs, &amp;child_of_bds,
+                    file_role, false, errp);
+    if (!bs-&gt;file) {
+        return -EINVAL;
+    }</code></pre>
+           <p>
+            bdrv_open_child函数在block.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">/*
+ * Opens a disk image whose options are given as BlockdevRef in another block
+ * device's options.
+ *
+ * If allow_none is true, no image will be opened if filename is false and no
+ * BlockdevRef is given. NULL will be returned, but errp remains unset.
+ *
+ * bdrev_key specifies the key for the image's BlockdevRef in the options QDict.
+ * That QDict has to be flattened; therefore, if the BlockdevRef is a QDict
+ * itself, all options starting with "${bdref_key}." are considered part of the
+ * BlockdevRef.
+ *
+ * The BlockdevRef will be removed from the options QDict.
+ *
+ * The caller must hold the lock of the main AioContext and no other AioContext.
+ * @parent can move to a different AioContext in this function. Callers must
+ * make sure that their AioContext locking is still correct after this.
+ */
+BdrvChild *bdrv_open_child(const char *filename,
+                           QDict *options, const char *bdref_key,
+                           BlockDriverState *parent,
+                           const BdrvChildClass *child_class,
+                           BdrvChildRole child_role,
+                           bool allow_none, Error **errp)
+{
+    BlockDriverState *bs;
+    BdrvChild *child;
+    AioContext *ctx;
+
+    GLOBAL_STATE_CODE();
+
+    bs = bdrv_open_child_bs(filename, options, bdref_key, parent, child_class,
+                            child_role, allow_none, errp);
+    if (bs == NULL) {
+        return NULL;
+    }
+
+    ctx = bdrv_get_aio_context(bs);
+    aio_context_acquire(ctx);
+    child = bdrv_attach_child(parent, bs, bdref_key, child_class, child_role,
+                              errp);
+    aio_context_release(ctx);
+
+    return child;
+}
+</code></pre>
+           <p>
+            仔细读一下函数注释：
+           </p>
+           <blockquote>
+            <p>
+             <strong>
+              函数功能：
+             </strong>
+            </p>
+            <p>
+             打开一个磁盘映像，其选项在另一个块设备的选项中以BlockdevRef给出。
+            </p>
+            <p>
+             <strong>
+              参数说明：
+             </strong>
+            </p>
+            <ul>
+             <li>
+              bool allow_none
+             </li>
+            </ul>
+            <p>
+             如果allow_none为true，则当filename为false且未给出BlockdevRef时，则不会打开任何图像。将返回NULL，但errp仍未设置。
+            </p>
+            <ul>
+             <li>
+              const char *bdref_key
+             </li>
+            </ul>
+            <p>
+             bdrev_key在选项QDict中指定映像的BlockdevRef的密钥。
+            </p>
+            <p>
+             QDict必须被平坦化。因此，如果BlockdevRef是QDict本身，所有以“${bdref_key}.”开头的选项都被视为BlockdevRef的一部分。
+            </p>
+            <p>
+            </p>
+            <p>
+             BlockdevRef将从选项QDict中删除。调用者必须持有主AioContext的锁，而不能持有其他AioContext。
+            </p>
+            <p>
+            </p>
+            <p>
+             父节点可以在此函数中移动到不同的AioContext。调用者必须确保在此之后它们的AioContext锁定仍然正确。
+            </p>
+           </blockquote>
+           <p>
+            这里插一句：实际上，上一回的qcow2_open函数中调用的bdrv_open_file_child函数，就是bdrv_open_child函数多了一层封装。
+           </p>
+           <p>
+            bdrv_open_child_bs函数也在block.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">static BlockDriverState *
+bdrv_open_child_bs(const char *filename, QDict *options, const char *bdref_key,
+                   BlockDriverState *parent, const BdrvChildClass *child_class,
+                   BdrvChildRole child_role, bool allow_none, Error **errp)
+{
+    BlockDriverState *bs = NULL;
+    QDict *image_options;
+    char *bdref_key_dot;
+    const char *reference;
+
+    assert(child_class != NULL);
+
+    bdref_key_dot = g_strdup_printf("%s.", bdref_key);
+    qdict_extract_subqdict(options, &amp;image_options, bdref_key_dot);
+    g_free(bdref_key_dot);
+
+    /*
+     * Caution: while qdict_get_try_str() is fine, getting non-string
+     * types would require more care.  When @options come from
+     * -blockdev or blockdev_add, its members are typed according to
+     * the QAPI schema, but when they come from -drive, they're all
+     * QString.
+     */
+    reference = qdict_get_try_str(options, bdref_key);
+    if (!filename &amp;&amp; !reference &amp;&amp; !qdict_size(image_options)) {
+        if (!allow_none) {
+            error_setg(errp, "A block device must be specified for \"%s\"",
+                       bdref_key);
+        }
+        qobject_unref(image_options);
+        goto done;
+    }
+
+    bs = bdrv_open_inherit(filename, reference, image_options, 0,
+                           parent, child_class, child_role, errp);
+    if (!bs) {
+        goto done;
+    }
+
+done:
+    qdict_del(options, bdref_key);
+    return bs;
+}</code></pre>
+           <p>
+            bdrv_open_child_bs函数中又调用了前文书讲过的bdrv_open_inherit函数（参见
+            <a href="https://phmatthaus.blog.csdn.net/article/details/147433196" rel="nofollow" title="QEMU源码全解析 —— 块设备虚拟化（21）-CSDN博客">
+             QEMU源码全解析 —— 块设备虚拟化（21）-CSDN博客
+            </a>
+            ）。这似乎有个循环，但以目前的认知，尚未弄清楚结束条件。后续需要待完全捋清楚后，再行详解。
+           </p>
+           <p>
+            至此，QEMU启动过程中的块设备虚拟化就基本讲解完了。再来回顾一下流程：
+           </p>
+           <p>
+            1）QEMU的启动命令行中设置存储相关参数（-drive、-device等）；
+           </p>
+           <p>
+            2）qemu_create_early_backends函数（qemu_init函数中调用）中调用configure_blockdev函数对于QEMU命令行中的启动参数-drive进行解析，并且初始化这个设备要调用drive_init_func函数；
+           </p>
+           <p>
+            3）drive_init_func函数中，会调用drive_new函数创建一个设备；
+           </p>
+           <p>
+            4）driver_new函数中，也会解析QEMU的启动参数-device，将driver设置为virblk-blk-pci；还会解析file参数；
+           </p>
+           <p>
+            5）drive_new函数接下来会调用blockdev_init函数，根据参数进行初始化；
+           </p>
+           <p>
+            6）blockdev_init函数调用blk_new_open函数，打开宿主机上的磁盘文件，返回BlockBackend，即virtio后端；
+           </p>
+           <p>
+            7）blk_new_open函数通过调用链bdrv_open() -&gt; bdrv_open_inherit() -&gt; bdrv_open_common()，根据磁盘文件的格式，得到BlockDriver。对于不同的格式，其打开文件的方式不同，如对于qcow2格式，其打开函数为qcow2_open函数；而对于raw格式，其打开文件的函数为raw_open函数；
+           </p>
+           <p>
+            8）drive_new函数最后会创建一个DriverInfo来管理打开的设备。
+           </p>
+           <p>
+           </p>
+           <p>
+            下一回开始，对于向虚拟机的一个进程写入一个文件的完整过程进行解析。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

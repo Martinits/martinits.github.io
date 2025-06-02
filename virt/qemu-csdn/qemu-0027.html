@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/132142901" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析27 —— QOM介绍（16）_qemu property-CSDN博客
+     </title>
+     <meta content="qemu property" name="keywords"/>
+     <meta content='{"autorun":true,"install":true,"keyword":"qemu property"}' name="csdn-baidu-search"/>
+     <meta content="文章浏览阅读341次。本文深入讲解QEMU中QOM（对象查询机制）的对象属性获取接口，通过`object_property_get`函数及其工作原理，阐述不同属性类型的获取函数，以bool属性为例进行详细分析，并展示在hw/core/machine.c中如何定义对象属性的获取函数。" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-097f33faa6.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析27 —— QOM介绍（16）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2023-08-07 17:57:12 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量341
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072873.html" rel="noopener" target="_blank">
+              KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2023-08-07 15:48:18 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/132142901" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/132142901
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div id="blogHuaweiyunAdvert">
+        </div>
+        <div id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec more">
+                同时被 2 个专栏收录
+                <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newArrowDown1White.png"/>
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             154 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+          <div class="column-group-item column-group1">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072873.html" target="_blank" title="KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                KVM
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             88 篇文章
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-bt articleColumnFreeBt" data-id="12072873">
+             订阅专栏
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <div class="ai-abstract-box">
+         <div class="ai-abstract">
+          <div class="abstract-content">
+           <img alt="" class="lock-img" src="https://img-home.csdnimg.cn/images/20240711042549.png"/>
+           本文深入讲解QEMU中QOM（对象查询机制）的对象属性获取接口，通过`object_property_get`函数及其工作原理，阐述不同属性类型的获取函数，以bool属性为例进行详细分析，并展示在hw/core/machine.c中如何定义对象属性的获取函数。
+          </div>
+          <span>
+           摘要由CSDN通过智能技术生成
+          </span>
+         </div>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/132110633" title="QEMU源码全解析26 —— QOM介绍（15）">
+             QEMU源码全解析26 —— QOM介绍（15）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM》源码解析与应用 —— 李强，机械工业出版社
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <p>
+            前文讲解了对象属性的设置接口。本文讲解对象属性的获取接口。实际上机制是很相似的。
+           </p>
+           <p>
+            对象属性的设置是通过object_property_get函数来完成的。该函数同样在qom/object.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">bool object_property_get(Object *obj, const char *name, Visitor *v,
+                         Error **errp)
+{
+    Error *err = NULL;
+    ObjectProperty *prop = object_property_find_err(obj, name, errp);
+
+    if (prop == NULL) {
+        return false;
+    }
+
+    if (!prop-&gt;get) {
+        error_setg(errp, QERR_PERMISSION_DENIED);
+        return false;
+    }
+    prop-&gt;get(obj, v, name, prop-&gt;opaque, &amp;err);
+    error_propagate(errp, err);
+    return !err;
+}</code></pre>
+           <p>
+            其实object_property_get函数只是简单地调用了ObjectProperty的get函数。
+           </p>
+           <p>
+            每一种属性类型都有自己的get函数，如布尔（bool）、字符串（str）、enum（枚举）等。它们都在qom/object.c中，逐个来看：
+           </p>
+           <pre><code class="language-cpp">static void property_get_str(Object *obj, Visitor *v, const char *name,
+                             void *opaque, Error **errp)
+{
+    StringProperty *prop = opaque;
+    char *value;
+    Error *err = NULL;
+
+    value = prop-&gt;get(obj, &amp;err);
+    if (err) {
+        error_propagate(errp, err);
+        return;
+    }
+
+    visit_type_str(v, name, &amp;value, errp);
+    g_free(value);
+}
+</code></pre>
+           <pre><code class="language-cpp">static void property_get_enum(Object *obj, Visitor *v, const char *name,
+                              void *opaque, Error **errp)
+{
+    EnumProperty *prop = opaque;
+    int value;
+    Error *err = NULL;
+
+    value = prop-&gt;get(obj, &amp;err);
+    if (err) {
+        error_propagate(errp, err);
+        return;
+    }
+
+    visit_type_enum(v, name, &amp;value, prop-&gt;lookup, errp);
+}</code></pre>
+           <pre><code class="language-cpp">static void property_get_bool(Object *obj, Visitor *v, const char *name,
+                              void *opaque, Error **errp)
+{
+    BoolProperty *prop = opaque;
+    bool value;
+    Error *err = NULL;
+
+    value = prop-&gt;get(obj, &amp;err);
+    if (err) {
+        error_propagate(errp, err);
+        return;
+    }
+
+    visit_type_bool(v, name, &amp;value, errp);
+}
+</code></pre>
+           <p>
+            仍以bool为例进行讲解。可以看到，property_get_bool函数调用了具体属性（BoolProperty）的get函数，这是在创建这个属性的时候指定的。上一回已经讲过，对象属性的添加是通过object_property_add接口完成的。而bool类型对象属性的添加object_property_add_bool函数则是调用了此接口。object_property_add_bool函数在qom/object.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">ObjectProperty *
+object_property_add_bool(Object *obj, const char *name,
+                         bool (*get)(Object *, Error **),
+                         void (*set)(Object *, bool, Error **))
+{
+    BoolProperty *prop = g_malloc0(sizeof(*prop));
+ 
+    prop-&gt;get = get;
+    prop-&gt;set = set;
+ 
+    return object_property_add(obj, name, "bool",
+                               get ? property_get_bool : NULL,
+                               set ? property_set_bool : NULL,
+                               property_release_data,
+                               prop);
+}</code></pre>
+           <p>
+            从这个函数中就可以看到，BoolProperty结构的set成员函数为调用object_property_add_bool函数时传入的参数，形参为：void (*get)(Object *, Error **)。在object_property_add_bool函数中使用了上边的property_get_bool函数，在property_get_bool函数中最终调用了形参bool (*get)(Object *, Error **)对应的实参，即真正对象属性的获取函数。
+           </p>
+           <p>
+            仍以machine为例，hw/core/machine.c的machine_initfn函数代码如下：
+           </p>
+           <pre><code class="language-cpp">static void machine_initfn(Object *obj)
+{
+    MachineState *ms = MACHINE(obj);
+    MachineClass *mc = MACHINE_GET_CLASS(obj);
+ 
+    container_get(obj, "/peripheral");
+    container_get(obj, "/peripheral-anon");
+ 
+    ms-&gt;dump_guest_core = true;
+    ms-&gt;mem_merge = true;
+    ms-&gt;enable_graphics = true;
+    ms-&gt;kernel_cmdline = g_strdup("");
+    ms-&gt;ram_size = mc-&gt;default_ram_size;
+    ms-&gt;maxram_size = mc-&gt;default_ram_size;
+ 
+    if (mc-&gt;nvdimm_supported) {
+        Object *obj = OBJECT(ms);
+ 
+        ms-&gt;nvdimms_state = g_new0(NVDIMMState, 1);
+        object_property_add_bool(obj, "nvdimm",
+                                 machine_get_nvdimm, machine_set_nvdimm);
+        object_property_set_description(obj, "nvdimm",
+                                        "Set on/off to enable/disable "
+                                        "NVDIMM instantiation");
+ 
+        object_property_add_str(obj, "nvdimm-persistence",
+                                machine_get_nvdimm_persistence,
+                                machine_set_nvdimm_persistence);
+        object_property_set_description(obj, "nvdimm-persistence",
+                                        "Set NVDIMM persistence"
+                                        "Valid values are cpu, mem-ctrl");
+    }
+ 
+    if (mc-&gt;cpu_index_to_instance_props &amp;&amp; mc-&gt;get_default_cpu_node_id) {
+        ms-&gt;numa_state = g_new0(NumaState, 1);
+        object_property_add_bool(obj, "hmat",
+                                 machine_get_hmat, machine_set_hmat);
+        object_property_set_description(obj, "hmat",
+                                        "Set on/off to enable/disable "
+                                        "ACPI Heterogeneous Memory Attribute "
+                                        "Table (HMAT)");
+    }
+ 
+    /* default to mc-&gt;default_cpus */
+    ms-&gt;smp.cpus = mc-&gt;default_cpus;
+    ms-&gt;smp.max_cpus = mc-&gt;default_cpus;
+    ms-&gt;smp.sockets = 1;
+    ms-&gt;smp.dies = 1;
+    ms-&gt;smp.clusters = 1;
+    ms-&gt;smp.cores = 1;
+    ms-&gt;smp.threads = 1;
+ 
+    machine_copy_boot_config(ms, &amp;(BootConfiguration){ 0 });
+}</code></pre>
+           <p>
+            关注此函数中的以下代码：
+           </p>
+           <pre><code class="language-cpp">object_property_add_bool(obj, "hmat",
+                                 machine_get_hmat, machine_set_hmat);</code></pre>
+           <p>
+            代码中的machine_get_machine函数就是传入object_property_add_bool函数的与形参bool (*get)(Object *, Error **)对应的实参，也即对于machine对象属性进行获取时实际调用的函数。
+           </p>
+           <p>
+            至此，
+           </p>
+           <p>
+            对象的属性的添加、设置和获取就讲解完了。下一回开始讲解类的属性的添加、设置和获取。
+           </p>
+           <p>
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

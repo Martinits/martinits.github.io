@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/145799428" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 内存虚拟化（17）-CSDN博客
+     </title>
+     <meta content="QEMU源码全解析 —— 内存虚拟化（17）" name="keywords"/>
+     <meta content="文章浏览阅读93次。QEMU源码全解析 —— 内存虚拟化（17）" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-850e130245.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 内存虚拟化（17）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2025-02-23 21:58:34 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量93
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2025-02-22 21:44:17 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/145799428" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/145799428
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div id="blogHuaweiyunAdvert">
+        </div>
+        <div id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             155 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/145789569" title="QEMU源码全解析 —— 内存虚拟化（16）">
+             QEMU源码全解析 —— 内存虚拟化（16）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/leiyanjie8995/article/details/127603209" title="QEMU内存管理模型">
+             QEMU内存管理模型
+            </a>
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/JaCenz/article/details/130288702" title="浅谈QEMU Memory Region 与 Address Space">
+             浅谈QEMU Memory Region 与 Address Space
+            </a>
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/dvd37784302/article/details/138370458" title="【QEMU系统分析之实例篇（七）】-CSDN博客">
+             【QEMU系统分析之实例篇（七）】-CSDN博客
+            </a>
+           </p>
+           <p>
+            <a href="https://www.cnblogs.com/edver/p/14470706.html" rel="nofollow" title="QEMU内存分析（一）：内存虚拟化关键结构体 - Edver - 博客园">
+             QEMU内存分析（一）：内存虚拟化关键结构体 - Edver - 博客园
+            </a>
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h4>
+            2. QEMU虚拟机内存初始化
+           </h4>
+           <p>
+            本回继续对于QEMU内存平坦化的核心函数 —— render_memory_region()进行深入解析。为了便于理解和回顾，再次贴出render_memory_region函数代码，在softmmu/memory.c中，如下：
+           </p>
+           <pre><code class="language-cpp">/* Render a memory region into the global view.  Ranges in @view obscure
+ * ranges in @mr.
+ */
+static void render_memory_region(FlatView *view,
+                                 MemoryRegion *mr,
+                                 Int128 base,
+                                 AddrRange clip,
+                                 bool readonly,
+                                 bool nonvolatile)
+{
+    MemoryRegion *subregion;
+    unsigned i;
+    hwaddr offset_in_region;
+    Int128 remain;
+    Int128 now;
+    FlatRange fr;
+    AddrRange tmp;
+ 
+    if (!mr-&gt;enabled) {
+        return;
+    }
+ 
+    int128_addto(&amp;base, int128_make64(mr-&gt;addr));
+    readonly |= mr-&gt;readonly;
+    nonvolatile |= mr-&gt;nonvolatile;
+ 
+    tmp = addrrange_make(base, mr-&gt;size);
+ 
+    if (!addrrange_intersects(tmp, clip)) {
+        return;
+    }
+ 
+    clip = addrrange_intersection(tmp, clip);
+ 
+    if (mr-&gt;alias) {
+        int128_subfrom(&amp;base, int128_make64(mr-&gt;alias-&gt;addr));
+        int128_subfrom(&amp;base, int128_make64(mr-&gt;alias_offset));
+        render_memory_region(view, mr-&gt;alias, base, clip,
+                             readonly, nonvolatile);
+        return;
+    }
+ 
+    /* Render subregions in priority order. */
+    QTAILQ_FOREACH(subregion, &amp;mr-&gt;subregions, subregions_link) {
+        render_memory_region(view, subregion, base, clip,
+                             readonly, nonvolatile);
+    }
+ 
+    if (!mr-&gt;terminates) {
+        return;
+    }
+ 
+    offset_in_region = int128_get64(int128_sub(clip.start, base));
+    base = clip.start;
+    remain = clip.size;
+ 
+    fr.mr = mr;
+    fr.dirty_log_mask = memory_region_get_dirty_log_mask(mr);
+    fr.romd_mode = mr-&gt;romd_mode;
+    fr.readonly = readonly;
+    fr.nonvolatile = nonvolatile;
+ 
+    /* Render the region itself into any gaps left by the current view. */
+    for (i = 0; i &lt; view-&gt;nr &amp;&amp; int128_nz(remain); ++i) {
+        if (int128_ge(base, addrrange_end(view-&gt;ranges[i].addr))) {
+            continue;
+        }
+        if (int128_lt(base, view-&gt;ranges[i].addr.start)) {
+            now = int128_min(remain,
+                             int128_sub(view-&gt;ranges[i].addr.start, base));
+            fr.offset_in_region = offset_in_region;
+            fr.addr = addrrange_make(base, now);
+            flatview_insert(view, i, &amp;fr);
+            ++i;
+            int128_addto(&amp;base, now);
+            offset_in_region += int128_get64(now);
+            int128_subfrom(&amp;remain, now);
+        }
+        now = int128_sub(int128_min(int128_add(base, remain),
+                                    addrrange_end(view-&gt;ranges[i].addr)),
+                         base);
+        int128_addto(&amp;base, now);
+        offset_in_region += int128_get64(now);
+        int128_subfrom(&amp;remain, now);
+    }
+    if (int128_nz(remain)) {
+        fr.offset_in_region = offset_in_region;
+        fr.addr = addrrange_make(base, remain);
+        flatview_insert(view, i, &amp;fr);
+    }
+}</code></pre>
+           <p>
+            上一回讲到了以下代码片段：
+           </p>
+           <pre><code class="language-cpp">    /* Render the region itself into any gaps left by the current view. */
+    for (i = 0; i &lt; view-&gt;nr &amp;&amp; int128_nz(remain); ++i) {
+        ……
+        if (int128_lt(base, view-&gt;ranges[i].addr.start)) {
+            now = int128_min(remain,
+                             int128_sub(view-&gt;ranges[i].addr.start, base));
+            fr.offset_in_region = offset_in_region;
+            fr.addr = addrrange_make(base, now);
+            flatview_insert(view, i, &amp;fr);
+            ++i;
+            int128_addto(&amp;base, now);
+            offset_in_region += int128_get64(now);
+            int128_subfrom(&amp;remain, now);
+        }
+        ……
+    }</code></pre>
+           <p>
+            1）计算now，即上一回图中（见下边）左边深色区域的长度。
+           </p>
+           <pre><code class="language-cpp">            now = int128_min(remain,
+                             int128_sub(view-&gt;ranges[i].addr.start, base));</code></pre>
+           <p>
+            2）之后设置fr.offset_in_region为在mr2中的偏移（此偏移为0）。
+           </p>
+           <pre><code class="language-cpp">    offset_in_region = int128_get64(int128_sub(clip.start, base));
+    ……
+        /* Render the region itself into any gaps left by the current view. */
+        for (i = 0; i &lt; view-&gt;nr &amp;&amp; int128_nz(remain); ++i) {
+            ……
+            fr.offset_in_region = offset_in_region;
+            ……</code></pre>
+           <p>
+            3）fr.addr描述的是该FlatRange在虚拟机物理地址空间中的位置，也就是左边深色区域的起始位置。
+           </p>
+           <pre><code class="language-cpp">            fr.addr = addrrange_make(base, now);</code></pre>
+           <p>
+            4）接着调用flatview_insert函数，将这个fr插入到view中。
+           </p>
+           <pre><code class="language-cpp">            flatview_insert(view, i, &amp;fr);</code></pre>
+           <p>
+            5）然后更新base，此时base跟fr2的开始位置一样。
+           </p>
+           <pre><code class="language-cpp">           int128_addto(&amp;base, now);</code></pre>
+           <p>
+            6）接下来，更新remain，剩下fr2+右边的深色区域。
+           </p>
+           <pre><code class="language-cpp">            offset_in_region += int128_get64(now);
+            int128_subfrom(&amp;remain, now);</code></pre>
+           <p>
+            <img alt="" height="757" src="https://i-blog.csdnimg.cn/direct/d1008c58084847dfbfdb84f3c9ba82e8.png" width="851"/>
+           </p>
+           <p>
+            接下来是for循环中的以下代码片段：
+           </p>
+           <pre><code class="language-cpp">    /* Render the region itself into any gaps left by the current view. */
+    for (i = 0; i &lt; view-&gt;nr &amp;&amp; int128_nz(remain); ++i) {
+        ……
+        now = int128_sub(int128_min(int128_add(base, remain),
+                                    addrrange_end(view-&gt;ranges[i].addr)),
+                         base);
+        int128_addto(&amp;base, now);
+        offset_in_region += int128_get64(now);
+        int128_subfrom(&amp;remain, now);
+    }</code></pre>
+           <p>
+            对于for循环中该段代码以及render_memory_region函数后续代码的解析，请看下回。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

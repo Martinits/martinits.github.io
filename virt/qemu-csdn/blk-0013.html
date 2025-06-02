@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/146610386" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 块设备虚拟化（13）-CSDN博客
+     </title>
+     <meta content="QEMU源码全解析 —— 块设备虚拟化（13）" name="keywords"/>
+     <meta content='{"autorun":true,"install":true,"keyword":"vue3 deep"}' name="csdn-baidu-search"/>
+     <meta content="文章浏览阅读44次。QEMU源码全解析 —— 块设备虚拟化（13）" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-72afa20676.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 块设备虚拟化（13）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2025-04-06 11:54:18 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量44
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like" data-type="top">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2025-04-04 09:41:20 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/146610386" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/146610386
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="" id="blogHuaweiyunAdvert">
+        </div>
+        <div class="" id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             172 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views atom-one-light" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/146609846" title="QEMU源码全解析 —— 块设备虚拟化（12）">
+             QEMU源码全解析 —— 块设备虚拟化（12）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h3>
+            QEMU初始化阶段的块设备虚拟化
+           </h3>
+           <p>
+            上一回或者说上几回详细讲解了QEMU中类Java反射机制的从模板生成类和类的实例化的完整流程。本回开始，继续往下讲解块设备虚拟化的机制和流程。
+           </p>
+           <p>
+            再来回顾一下TYPE_VIRTIO_BLK层的类声明，在hw/block/virtio-blk.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">static const TypeInfo virtio_blk_info = {
+    .name = TYPE_VIRTIO_BLK,
+    .parent = TYPE_VIRTIO_DEVICE,
+    .instance_size = sizeof(VirtIOBlock),
+    .instance_init = virtio_blk_instance_init,
+    .class_init = virtio_blk_class_init,
+};
+ 
+static void virtio_register_types(void)
+{
+    type_register_static(&amp;virtio_blk_info);
+}
+ 
+type_init(virtio_register_types)</code></pre>
+           <p>
+            virtio_blk_info中的class_init指向的函数为virtio_blk_class_init。该函数也在hw/block/virtio-blk.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">static void virtio_blk_class_init(ObjectClass *klass, void *data)
+{
+    DeviceClass *dc = DEVICE_CLASS(klass);
+    VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);
+
+    device_class_set_props(dc, virtio_blk_properties);
+    dc-&gt;vmsd = &amp;vmstate_virtio_blk;
+    set_bit(DEVICE_CATEGORY_STORAGE, dc-&gt;categories);
+    vdc-&gt;realize = virtio_blk_device_realize;
+    vdc-&gt;unrealize = virtio_blk_device_unrealize;
+    vdc-&gt;get_config = virtio_blk_update_config;
+    vdc-&gt;set_config = virtio_blk_set_config;
+    vdc-&gt;get_features = virtio_blk_get_features;
+    vdc-&gt;set_status = virtio_blk_set_status;
+    vdc-&gt;reset = virtio_blk_reset;
+    vdc-&gt;save = virtio_blk_save_device;
+    vdc-&gt;load = virtio_blk_load_device;
+    vdc-&gt;start_ioeventfd = virtio_blk_data_plane_start;
+    vdc-&gt;stop_ioeventfd = virtio_blk_data_plane_stop;
+}</code></pre>
+           <p>
+            在virtio_blk_class_init函数中，定义了VirtioDeviceClass的realize函数为virtio_blk_device_realize()。virtio_blk_device_realize函数在同文件（hw/block/virtio-blk.c）中，代码如下：
+           </p>
+           <pre><code class="language-cpp">static void virtio_blk_device_realize(DeviceState *dev, Error **errp)
+{
+    VirtIODevice *vdev = VIRTIO_DEVICE(dev);
+    VirtIOBlock *s = VIRTIO_BLK(dev);
+    VirtIOBlkConf *conf = &amp;s-&gt;conf;
+    Error *err = NULL;
+    unsigned i;
+
+    if (!conf-&gt;conf.blk) {
+        error_setg(errp, "drive property not set");
+        return;
+    }
+    if (!blk_is_inserted(conf-&gt;conf.blk)) {
+        error_setg(errp, "Device needs media, but drive is empty");
+        return;
+    }
+    if (conf-&gt;num_queues == VIRTIO_BLK_AUTO_NUM_QUEUES) {
+        conf-&gt;num_queues = 1;
+    }
+    if (!conf-&gt;num_queues) {
+        error_setg(errp, "num-queues property must be larger than 0");
+        return;
+    }
+    if (conf-&gt;queue_size &lt;= 2) {
+        error_setg(errp, "invalid queue-size property (%" PRIu16 "), "
+                   "must be &gt; 2", conf-&gt;queue_size);
+        return;
+    }
+    if (!is_power_of_2(conf-&gt;queue_size) ||
+        conf-&gt;queue_size &gt; VIRTQUEUE_MAX_SIZE) {
+        error_setg(errp, "invalid queue-size property (%" PRIu16 "), "
+                   "must be a power of 2 (max %d)",
+                   conf-&gt;queue_size, VIRTQUEUE_MAX_SIZE);
+        return;
+    }
+
+    if (!blkconf_apply_backend_options(&amp;conf-&gt;conf,
+                                       !blk_supports_write_perm(conf-&gt;conf.blk),
+                                       true, errp)) {
+        return;
+    }
+    s-&gt;original_wce = blk_enable_write_cache(conf-&gt;conf.blk);
+    if (!blkconf_geometry(&amp;conf-&gt;conf, NULL, 65535, 255, 255, errp)) {
+        return;
+    }
+
+    if (!blkconf_blocksizes(&amp;conf-&gt;conf, errp)) {
+        return;
+    }
+
+    BlockDriverState *bs = blk_bs(conf-&gt;conf.blk);
+    if (bs-&gt;bl.zoned != BLK_Z_NONE) {
+        virtio_add_feature(&amp;s-&gt;host_features, VIRTIO_BLK_F_ZONED);
+        if (bs-&gt;bl.zoned == BLK_Z_HM) {
+            virtio_clear_feature(&amp;s-&gt;host_features, VIRTIO_BLK_F_DISCARD);
+        }
+    }
+
+    if (virtio_has_feature(s-&gt;host_features, VIRTIO_BLK_F_DISCARD) &amp;&amp;
+        (!conf-&gt;max_discard_sectors ||
+         conf-&gt;max_discard_sectors &gt; BDRV_REQUEST_MAX_SECTORS)) {
+        error_setg(errp, "invalid max-discard-sectors property (%" PRIu32 ")"
+                   ", must be between 1 and %d",
+                   conf-&gt;max_discard_sectors, (int)BDRV_REQUEST_MAX_SECTORS);
+        return;
+    }
+
+    if (virtio_has_feature(s-&gt;host_features, VIRTIO_BLK_F_WRITE_ZEROES) &amp;&amp;
+        (!conf-&gt;max_write_zeroes_sectors ||
+         conf-&gt;max_write_zeroes_sectors &gt; BDRV_REQUEST_MAX_SECTORS)) {
+        error_setg(errp, "invalid max-write-zeroes-sectors property (%" PRIu32
+                   "), must be between 1 and %d",
+                   conf-&gt;max_write_zeroes_sectors,
+                   (int)BDRV_REQUEST_MAX_SECTORS);
+        return;
+    }
+
+    s-&gt;config_size = virtio_get_config_size(&amp;virtio_blk_cfg_size_params,
+                                            s-&gt;host_features);
+    virtio_init(vdev, VIRTIO_ID_BLOCK, s-&gt;config_size);
+
+    s-&gt;blk = conf-&gt;conf.blk;
+    s-&gt;rq = NULL;
+    s-&gt;sector_mask = (s-&gt;conf.conf.logical_block_size / BDRV_SECTOR_SIZE) - 1;
+
+    for (i = 0; i &lt; conf-&gt;num_queues; i++) {
+        virtio_add_queue(vdev, conf-&gt;queue_size, virtio_blk_handle_output);
+    }
+    qemu_coroutine_inc_pool_size(conf-&gt;num_queues * conf-&gt;queue_size / 2);
+    virtio_blk_data_plane_create(vdev, conf, &amp;s-&gt;dataplane, &amp;err);
+    if (err != NULL) {
+        error_propagate(errp, err);
+        for (i = 0; i &lt; conf-&gt;num_queues; i++) {
+            virtio_del_queue(vdev, i);
+        }
+        virtio_cleanup(vdev);
+        return;
+    }
+
+    /*
+     * This must be after virtio_init() so virtio_blk_dma_restart_cb() gets
+     * called after -&gt;start_ioeventfd() has already set blk's AioContext.
+     */
+    s-&gt;change =
+        qdev_add_vm_change_state_handler(dev, virtio_blk_dma_restart_cb, s);
+
+    blk_ram_registrar_init(&amp;s-&gt;blk_ram_registrar, s-&gt;blk);
+    blk_set_dev_ops(s-&gt;blk, &amp;virtio_block_ops, s);
+
+    blk_iostatus_enable(s-&gt;blk);
+
+    add_boot_device_lchs(dev, "/disk@0,0",
+                         conf-&gt;conf.lcyls,
+                         conf-&gt;conf.lheads,
+                         conf-&gt;conf.lsecs);
+}
+</code></pre>
+           <p>
+            在virtio_blk_device_realize函数中，先是通过virtio_init函数初始化VirtIODevice结构。代码片段如下：
+           </p>
+           <pre><code class="language-cpp">    virtio_init(vdev, VIRTIO_ID_BLOCK, s-&gt;config_size);</code></pre>
+           <p>
+            virtio_init函数在hw/virtio/virtio.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">void virtio_init(VirtIODevice *vdev, uint16_t device_id, size_t config_size)
+{
+    BusState *qbus = qdev_get_parent_bus(DEVICE(vdev));
+    VirtioBusClass *k = VIRTIO_BUS_GET_CLASS(qbus);
+    int i;
+    int nvectors = k-&gt;query_nvectors ? k-&gt;query_nvectors(qbus-&gt;parent) : 0;
+
+    if (nvectors) {
+        vdev-&gt;vector_queues =
+            g_malloc0(sizeof(*vdev-&gt;vector_queues) * nvectors);
+    }
+
+    vdev-&gt;start_on_kick = false;
+    vdev-&gt;started = false;
+    vdev-&gt;vhost_started = false;
+    vdev-&gt;device_id = device_id;
+    vdev-&gt;status = 0;
+    qatomic_set(&amp;vdev-&gt;isr, 0);
+    vdev-&gt;queue_sel = 0;
+    vdev-&gt;config_vector = VIRTIO_NO_VECTOR;
+    vdev-&gt;vq = g_new0(VirtQueue, VIRTIO_QUEUE_MAX);
+    vdev-&gt;vm_running = runstate_is_running();
+    vdev-&gt;broken = false;
+    for (i = 0; i &lt; VIRTIO_QUEUE_MAX; i++) {
+        vdev-&gt;vq[i].vector = VIRTIO_NO_VECTOR;
+        vdev-&gt;vq[i].vdev = vdev;
+        vdev-&gt;vq[i].queue_index = i;
+        vdev-&gt;vq[i].host_notifier_enabled = false;
+    }
+
+    vdev-&gt;name = virtio_id_to_name(device_id);
+    vdev-&gt;config_len = config_size;
+    if (vdev-&gt;config_len) {
+        vdev-&gt;config = g_malloc0(config_size);
+    } else {
+        vdev-&gt;config = NULL;
+    }
+    vdev-&gt;vmstate = qdev_add_vm_change_state_handler(DEVICE(vdev),
+            virtio_vmstate_change, vdev);
+    vdev-&gt;device_endian = virtio_default_endian();
+    vdev-&gt;use_guest_notifier_mask = true;
+}</code></pre>
+           <p>
+            从virtio_init函数代码中可以看到，VirtioIODevice结构（VirtIODevice *vdev）中有一个VirtQueue数组，它正是virtio中的前端和后端后端互相传输数据的队列，最多有VIRTIO_QUEUE_MAX个。代码片段如下：
+           </p>
+           <pre><code class="language-cpp">    vdev-&gt;vq = g_new0(VirtQueue, VIRTIO_QUEUE_MAX);
+    vdev-&gt;vm_running = runstate_is_running();
+    vdev-&gt;broken = false;
+    for (i = 0; i &lt; VIRTIO_QUEUE_MAX; i++) {
+        vdev-&gt;vq[i].vector = VIRTIO_NO_VECTOR;
+        vdev-&gt;vq[i].vdev = vdev;
+        vdev-&gt;vq[i].queue_index = i;
+        vdev-&gt;vq[i].host_notifier_enabled = false;
+    }</code></pre>
+           <p>
+            这一点也能够从VirtioIODevice结构的定义中看出来。VirtioIODevice结构的定义在include/hw/virtio/virtio.h中，如下：
+           </p>
+           <pre><code class="language-cpp">/**
+ * struct VirtIODevice - common VirtIO structure
+ * @name: name of the device
+ * @status: VirtIO Device Status field
+ *
+ */
+struct VirtIODevice
+{
+    DeviceState parent_obj;
+    const char *name;
+    uint8_t status;
+    uint8_t isr;
+    uint16_t queue_sel;
+    /**
+     * These fields represent a set of VirtIO features at various
+     * levels of the stack. @host_features indicates the complete
+     * feature set the VirtIO device can offer to the driver.
+     * @guest_features indicates which features the VirtIO driver has
+     * selected by writing to the feature register. Finally
+     * @backend_features represents everything supported by the
+     * backend (e.g. vhost) and could potentially be a subset of the
+     * total feature set offered by QEMU.
+     */
+    uint64_t host_features;
+    uint64_t guest_features;
+    uint64_t backend_features;
+
+    size_t config_len;
+    void *config;
+    uint16_t config_vector;
+    uint32_t generation;
+    int nvectors;
+    VirtQueue *vq;
+    MemoryListener listener;
+    uint16_t device_id;
+    /* @vm_running: current VM running state via virtio_vmstate_change() */
+    bool vm_running;
+    bool broken; /* device in invalid state, needs reset */
+    bool use_disabled_flag; /* allow use of 'disable' flag when needed */
+    bool disabled; /* device in temporarily disabled state */
+    /**
+     * @use_started: true if the @started flag should be used to check the
+     * current state of the VirtIO device. Otherwise status bits
+     * should be checked for a current status of the device.
+     * @use_started is only set via QMP and defaults to true for all
+     * modern machines (since 4.1).
+     */
+    bool use_started;
+    bool started;
+    bool start_on_kick; /* when virtio 1.0 feature has not been negotiated */
+    bool disable_legacy_check;
+    bool vhost_started;
+    VMChangeStateEntry *vmstate;
+    char *bus_name;
+    uint8_t device_endian;
+    /**
+     * @user_guest_notifier_mask: gate usage of -&gt;guest_notifier_mask() callback.
+     * This is used to suppress the masking of guest updates for
+     * vhost-user devices which are asynchronous by design.
+     */
+    bool use_guest_notifier_mask;
+    AddressSpace *dma_as;
+    QLIST_HEAD(, VirtQueue) *vector_queues;
+    QTAILQ_ENTRY(VirtIODevice) next;
+    /**
+     * @config_notifier: the event notifier that handles config events
+     */
+    EventNotifier config_notifier;
+    bool device_iotlb_enabled;
+};</code></pre>
+           <p>
+            其中重点关注以下一行定义：
+           </p>
+           <pre><code class="language-cpp">    VirtQueue *vq;</code></pre>
+           <p>
+            VIRTIO_QUEUE_MAX是一个宏，其定义在include/hw/virtio\virtio.h中，如下：
+           </p>
+           <pre><code class="language-cpp">#define VIRTIO_QUEUE_MAX 1024</code></pre>
+           <p>
+            也就是说，virtio中的前端和后端后端互相传输数据的队列最多有1024个。
+           </p>
+           <p>
+           </p>
+           <p>
+            更多内容请看下回。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

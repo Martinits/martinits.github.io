@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/132014009" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析20 —— QOM介绍（9）_qumu typeimpl-CSDN博客
+     </title>
+     <meta content="qumu typeimpl" name="keywords"/>
+     <meta content='{"autorun":true,"install":true,"keyword":"qumu typeimpl"}' name="csdn-baidu-search"/>
+     <meta content="文章浏览阅读330次。本文深入探讨QEMU中的QOM（对象模型）父类型成员域初始化过程，从type_initialize函数入手，分析memcpy如何进行初始化，并详细解释了类的初始化过程中ObjectClass到PCIDeviceClass的转换，涉及object_class_dynamic_cast函数和type_is_ancestor的使用，揭示了类型层次结构的工作原理。" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-097f33faa6.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析20 —— QOM介绍（9）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2023-07-31 12:38:54 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量330
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072873.html" rel="noopener" target="_blank">
+              KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2023-07-31 11:33:17 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/132014009" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/132014009
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div id="blogHuaweiyunAdvert">
+        </div>
+        <div id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec more">
+                同时被 2 个专栏收录
+                <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newArrowDown1White.png"/>
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             154 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+          <div class="column-group-item column-group1">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072873.html" target="_blank" title="KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                KVM
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             88 篇文章
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-bt articleColumnFreeBt" data-id="12072873">
+             订阅专栏
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <div class="ai-abstract-box">
+         <div class="ai-abstract">
+          <div class="abstract-content">
+           <img alt="" class="lock-img" src="https://img-home.csdnimg.cn/images/20240711042549.png"/>
+           本文深入探讨QEMU中的QOM（对象模型）父类型成员域初始化过程，从type_initialize函数入手，分析memcpy如何进行初始化，并详细解释了类的初始化过程中ObjectClass到PCIDeviceClass的转换，涉及object_class_dynamic_cast函数和type_is_ancestor的使用，揭示了类型层次结构的工作原理。
+          </div>
+          <span>
+           摘要由CSDN通过智能技术生成
+          </span>
+         </div>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://mp.csdn.net/mp_blog/creation/editor/132012985" title="QEMU源码全解析19 —— QOM介绍（8）">
+             QEMU源码全解析19 —— QOM介绍（8）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，极客时间
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM》源码解析与应用 —— 李强，机械工业出版社
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <p>
+            本回讲解父类型成员域的初始化相关内容。
+           </p>
+           <p>
+            父类型的成员域是在什么时候初始化的呢？还得从type_initialize函数说起。为了便于理解，再次贴出type_initialize函数的代码片段。在qom/object.c中，如下所示：
+           </p>
+           <pre><code class="language-cpp">    ……
+    ti-&gt;class = g_malloc0(ti-&gt;class_size);
+
+    parent = type_get_parent(ti);
+    if (parent) {
+        type_initialize(parent);
+        GSList *e;
+        int i;
+
+        g_assert(parent-&gt;class_size &lt;= ti-&gt;class_size);
+        g_assert(parent-&gt;instance_size &lt;= ti-&gt;instance_size);
+        memcpy(ti-&gt;class, parent-&gt;class, parent-&gt;class_size);
+        ti-&gt;class-&gt;interfaces = NULL;
+        ……
+    ……</code></pre>
+           <p>
+            正是调用的memcpy(ti-&gt;class, parent-&gt;class, parent-&gt;class_size);这一行代码对父类型所占的这部分空间进行的初始化。
+           </p>
+           <p>
+            再来看分析类的初始化，type_initialize函数最后一段代码为：
+           </p>
+           <pre><code class="language-cpp">    ……
+    if (ti-&gt;class_init) {
+        ti-&gt;class_init(ti-&gt;class, ti-&gt;class_data);
+    }
+}</code></pre>
+           <p>
+            第一个参数为ti-&gt;class，对于edu来说，就是刚刚分配的PCIDeviceClass。但是class_init回调的参数指定的类型是ObjectClass，所以还需要完成ObjectClass到PCIDeviceClass的转换。可以在hw/misc/edu.c的edu_class_init函数中看到这一转换，代码如下：
+           </p>
+           <pre><code class="language-cpp">static void edu_class_init(ObjectClass *class, void *data)
+{
+    DeviceClass *dc = DEVICE_CLASS(class);
+    PCIDeviceClass *k = PCI_DEVICE_CLASS(class);
+
+    k-&gt;realize = pci_edu_realize;
+    k-&gt;exit = pci_edu_uninit;
+    k-&gt;vendor_id = PCI_VENDOR_ID_QEMU;
+    k-&gt;device_id = 0x11e8;
+    k-&gt;revision = 0x10;
+    k-&gt;class_id = PCI_CLASS_OTHERS;
+    set_bit(DEVICE_CATEGORY_MISC, dc-&gt;categories);
+}</code></pre>
+           <p>
+            类型的转换是由PCI_DEVICE_CLASS完成的（当然DEVICE_CLASS也完成了转换）。该宏经过层层扩展，最终会调用到object_class_dynamic函数。该函数在qom/object.c中，代码如下：
+           </p>
+           <pre><code class="language-cpp">ObjectClass *object_class_dynamic_cast(ObjectClass *class,
+                                       const char *typename)
+{
+    ObjectClass *ret = NULL;
+    TypeImpl *target_type;
+    TypeImpl *type;
+
+    if (!class) {
+        return NULL;
+    }
+
+    /* A simple fast path that can trigger a lot for leaf classes.  */
+    type = class-&gt;type;
+    if (type-&gt;name == typename) {
+        return class;
+    }
+
+    target_type = type_get_by_name(typename);
+    if (!target_type) {
+        /* target class type unknown, so fail the cast */
+        return NULL;
+    }
+
+    if (type-&gt;class-&gt;interfaces &amp;&amp;
+            type_is_ancestor(target_type, type_interface)) {
+        int found = 0;
+        GSList *i;
+
+        for (i = class-&gt;interfaces; i; i = i-&gt;next) {
+            ObjectClass *target_class = i-&gt;data;
+
+            if (type_is_ancestor(target_class-&gt;type, target_type)) {
+                ret = target_class;
+                found++;
+            }
+         }
+
+        /* The match was ambiguous, don't allow a cast */
+        if (found &gt; 1) {
+            ret = NULL;
+        }
+    } else if (type_is_ancestor(type, target_type)) {
+        ret = class;
+    }
+
+    return ret;
+}
+</code></pre>
+           <p>
+            从函数名object_class_dynamic_cast就可以看出，这是一种动态转换，C++也有类似的dynamic_cast来完成从父类转换到子类的工作。object_class_dynamic_cast函数的第一个参数是需要转换的ObjectClass，第二个参数typename表示要转换到哪一种类型。
+           </p>
+           <p>
+            object_class_dynamic_cast函数首先通过type_get_by_name函数得到要转换到的TypeImpl，此处的typename是TYPE_PCI_DEVICE。代码片段如下：
+           </p>
+           <pre><code class="language-cpp">    /* A simple fast path that can trigger a lot for leaf classes.  */
+    type = class-&gt;type;
+    if (type-&gt;name == typename) {
+        return class;
+    }
+
+    target_type = type_get_by_name(typename);
+    if (!target_type) {
+        /* target class type unknown, so fail the cast */
+        return NULL;
+    }</code></pre>
+           <p>
+            以edu为例，type-&gt;name是"edu"，但是要转换到的却是TYPE_PCI_DEVICE，即include/hw/pci/pci.h中定义的"pci-device"。代码如下：
+           </p>
+           <pre><code class="language-cpp">#define TYPE_PCI_DEVICE "pci-device"</code></pre>
+           <p>
+            因此，会调用type_is_ancestor("edu", TYPE_PCI_DEVICE)来判断后者是否是前者的祖先。
+           </p>
+           <p>
+            在该函数中依次得到edu的父类型，然后判断是否与TYPE_PCI_DEVICE相等，由edu设备的TypeInfo可知其父类型为TYPE_PCI_DEVICE，所以这个type_is_ancestor会成功，能够进行从ObjectClass到PCIDeviceClass的转换。这样就可以直接通过(PCIDeviceClass *)ObjectClass完成从ObjectClass到PCIDeviceClass的强制转换了。
+           </p>
+           <p>
+            至此，类型的层次结构就讲解完了。
+           </p>
+           <p>
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

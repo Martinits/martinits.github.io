@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/146080602" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 块设备虚拟化（1）-CSDN博客
+     </title>
+     <meta content="QEMU源码全解析 —— 块设备虚拟化（1）" name="keywords"/>
+     <meta content="文章浏览阅读103次。QEMU源码全解析 —— 块设备虚拟化（1）" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-850e130245.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 块设备虚拟化（1）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="up-time">
+            最新推荐文章于 2025-03-19 21:57:46 发布
+           </div>
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCurrentTime2.png"/>
+             <span class="time blog-postTime" data-time="2025-03-07 00:10:35">
+              最新推荐文章于 2025-03-19 21:57:46 发布
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量103
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/146080602" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/146080602
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div id="blogHuaweiyunAdvert">
+        </div>
+        <div id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             155 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views" id="content_views">
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            <a href="https://developer.baidu.com/article/detail.html?id=3421158" rel="nofollow" title="详解全虚拟半虚拟及硬件辅助虚拟化技术-百度开发者中心">
+             详解全虚拟半虚拟及硬件辅助虚拟化技术-百度开发者中心
+            </a>
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <h3>
+            序言
+           </h3>
+           <p>
+            本专栏之前的系列文章，讲了很多QEMU/KVM相关知识，其中一部分内容是设备的虚拟化，如Machine、CPU、内存等。除了要虚拟化主板、CPU和内存，存储和网络（设备）也需要虚拟化。这两者属于外部设备（外设）了，要通过virtio来实现虚拟化。虽然笔者有专门针对于virtio的系列文章，但是在此要以存储也可以说块设备的角度，来看一下其虚拟化细节，同时在此过程中也会加深对于Virtio的理解。
+           </p>
+           <h3>
+            磁盘设备虚拟化方式
+           </h3>
+           <h4>
+            虚拟化方式
+           </h4>
+           <p>
+            <strong>
+             （1）全虚拟化（Full Virtualization）
+            </strong>
+           </p>
+           <p>
+            全虚拟化也称完全虚拟化，是指通过在宿主操作系统上安装一个虚拟化软件层（即虚拟机监视器VMM或Hypervisor），将物理硬件资源完全虚拟化成多个独立的虚拟机（VM）。每个虚拟机都可以独立运行其自己的操作系统和应用程序，且无需对操作系统进行修改。
+           </p>
+           <p>
+            全虚拟化方式下，虚拟机（监视器）里边的操作系统意识不到自己是运行在虚拟机中的。
+           </p>
+           <p>
+            <strong>
+             特点与优势
+            </strong>
+           </p>
+           <ul>
+            <li>
+             <strong>
+              兼容性强
+             </strong>
+             ：能够运行未经修改的操作系统，兼容多种类型的软件。
+            </li>
+            <li>
+             <strong>
+              隔离性好
+             </strong>
+             ：虚拟机之间相互隔离，确保安全性和稳定性。
+            </li>
+            <li>
+             <strong>
+              灵活度高
+             </strong>
+             ：适用于需要运行多个不同操作系统的环境。
+            </li>
+           </ul>
+           <p>
+            <strong>
+             适用场景
+            </strong>
+           </p>
+           <ul>
+            <li>
+             企业数据中心
+            </li>
+            <li>
+             云服务提供商
+            </li>
+            <li>
+             需要高隔离性和安全性的应用场景
+            </li>
+           </ul>
+           <p>
+            <strong>
+             缺点
+            </strong>
+           </p>
+           <p>
+            全虚拟化方式最大的问题（缺点）是，QEMU模拟的设备充当“翻译官”的角色，每个指令都需要翻译，速度慢、效率低。
+           </p>
+           <p>
+            <strong>
+             （2）半虚拟化（Paravirtualization）
+            </strong>
+           </p>
+           <p>
+            半虚拟化则要求虚拟机需要与宿主操作系统进行协作，共同完成虚拟化过程。这通常需要对虚拟机的操作系统进行修改，以使其能够与虚拟化软件层进行直接通信。
+           </p>
+           <p>
+            半虚拟化方式下，虚拟机（监视器）里边的操作系统知道自己是运行在虚拟机中的。
+           </p>
+           <p>
+            <strong>
+             特点与优势
+            </strong>
+           </p>
+           <ul>
+            <li>
+             <strong>
+              性能优越
+             </strong>
+             ：通过减少虚拟化层的开销，提高了性能。
+            </li>
+            <li>
+             <strong>
+              针对性强
+             </strong>
+             ：适用于特定的操作系统和环境，如专用的服务器环境。
+            </li>
+           </ul>
+           <p>
+            <strong>
+             适用场景
+            </strong>
+           </p>
+           <ul>
+            <li>
+             需要高性能和低延迟的应用场景
+            </li>
+            <li>
+             对兼容性要求不高的特定操作系统环境
+            </li>
+           </ul>
+           <p>
+            <strong>
+             缺点
+            </strong>
+           </p>
+           <p>
+            半虚拟化的缺点就是虚拟化得不够完全、彻底。
+           </p>
+           <p id="h3--hardware-assisted-virtualization-">
+            <strong>
+             （3）硬件辅助虚拟化（Hardware-Assisted Virtualization）
+            </strong>
+           </p>
+           <p>
+            硬件辅助虚拟化是利用现代处理器的硬件特性来优化虚拟机的执行和管理。处理器中集成了特定的指令集来支持虚拟机管理程序（Hypervisor），从而大幅减少了虚拟化开销。
+           </p>
+           <p>
+            <strong>
+             特点与优势
+            </strong>
+           </p>
+           <ul>
+            <li>
+             <strong>
+              性能接近原生
+             </strong>
+             ：借助硬件支持，虚拟机的性能接近裸机。
+            </li>
+            <li>
+             <strong>
+              安全性高
+             </strong>
+             ：硬件特性增强了虚拟机之间的安全性。
+            </li>
+            <li>
+             <strong>
+              易于部署
+             </strong>
+             ：无需对操作系统进行修改，简化了部署和维护的难度。
+            </li>
+           </ul>
+           <p>
+            <strong>
+             适用场景
+            </strong>
+           </p>
+           <ul>
+            <li>
+             云计算
+            </li>
+            <li>
+             大数据处理
+            </li>
+            <li>
+             服务器整合
+            </li>
+            <li>
+             需要高性能和高安全性的应用场景
+            </li>
+           </ul>
+           <p>
+            <strong>
+             （4）三种虚拟化方式的对比
+            </strong>
+           </p>
+           <p>
+            <strong>
+             性能对比
+            </strong>
+           </p>
+           <ul>
+            <li>
+             全虚拟化：由于需要模拟所有硬件功能，性能开销相对较大。
+            </li>
+            <li>
+             半虚拟化：通过减少虚拟化层的开销，性能优于全虚拟化。
+            </li>
+            <li>
+             硬件辅助虚拟化：借助硬件支持，性能接近原生硬件。
+            </li>
+           </ul>
+           <p>
+            <strong>
+             兼容性对比
+            </strong>
+           </p>
+           <ul>
+            <li>
+             全虚拟化：兼容性强，能够运行未经修改的操作系统。
+            </li>
+            <li>
+             半虚拟化：需要操作系统支持和修改，兼容性较差。
+            </li>
+            <li>
+             硬件辅助虚拟化：无需修改操作系统，兼容性好。
+            </li>
+           </ul>
+           <p>
+           </p>
+           <p>
+            更多内容请看下回。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

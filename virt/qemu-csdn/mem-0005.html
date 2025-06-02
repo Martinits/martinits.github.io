@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="utf-8"/>
+  <link href="https://blog.csdn.net/phmatthaus/article/details/142959291" rel="canonical"/>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+  <meta content="webkit" name="renderer">
+   <meta content="webkit" name="force-rendering">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
+    <meta content="always" name="referrer"/>
+    <meta content="no-siteapp" http-equiv="Cache-Control">
+     <link href="#" media="handheld" rel="alternate"/>
+     <meta content="pc" name="applicable-device"/>
+     <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"/>
+     <title>
+      QEMU源码全解析 —— 内存虚拟化（5）_qemu sdv-CSDN博客
+     </title>
+     <meta content="qemu sdv" name="keywords"/>
+     <meta content="文章浏览阅读326次。本文内容参考：《趣谈》 —— 刘超，/KVM》源码解析与应用 —— 李强，机械工业出版社特此致谢！距离上一篇文章（）的发表已经过去了半年多快一年了，并非笔者懈怠了，更不是对虚拟化没兴趣了，而是这半年太忙了。4月份入职新公司后一上来就“跑步前进”，再加上有其它“课题”需要研究，因此老没有继续这一部分了，真的感觉很对不起虚拟化。不过忙碌的日子终于过去了，可以至少有一部分时间和精力回到这一块，继续向前进行探索和研究。一上来先得“圆扣”，找到上一回讲到哪了。_qemu sdv" name="description"/>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-72afa20676.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+     </style>
+     <link href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin3-template/skin3-template-762f7595fd.min.css" rel="stylesheet" type="text/css"/>
+     <meta content='{"type":"0","fixModel":"1"}' name="toolbar"/>
+     <link href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css" rel="stylesheet" type="text/css"/>
+     <style>
+      .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+     </style>
+    </meta>
+   </meta>
+  </meta>
+  <style type="text/css">
+   * { user-select: text; } pre{max-height: none!important; overflow-y: hidden;}
+  </style>
+ </head>
+ <body class="nodata" style="">
+  <link href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css" rel="stylesheet">
+   <link href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css" rel="stylesheet">
+    <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;">
+     <div class="container clearfix container-concision" id="mainBox">
+      <main>
+       <div class="blog-content-box">
+        <div class="article-header-box">
+         <div class="article-header">
+          <div class="article-title-box">
+           <h1 class="title-article" id="articleContentId">
+            QEMU源码全解析 —— 内存虚拟化（5）
+           </h1>
+          </div>
+          <div class="article-info-box">
+           <div class="article-bar-top">
+            <img alt="" class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png"/>
+            <div class="bar-content">
+             <a class="follow-nickName vip-name" href="https://phmatthaus.blog.csdn.net" rel="noopener" target="_blank" title="蓝天居士">
+              蓝天居士
+             </a>
+             <img alt="" class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png"/>
+             <span class="time">
+              已于 2025-02-23 21:49:42 修改
+             </span>
+             <div class="read-count-box">
+              <img alt="" class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png"/>
+              <span class="read-count">
+               阅读量326
+              </span>
+              <a class="un-collection" data-report-click='{"mod":"popu_823","spm":"1001.2101.3001.4232","ab":"new"}' id="blog_detail_zk_collection">
+               <img alt="" class="article-collect-img article-heard-img un-collect-status isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" style="display:inline-block"/>
+               <img alt="" class="article-collect-img article-heard-img collect-status isactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" style="display:none"/>
+               <span class="name">
+                收藏
+               </span>
+               <span class="get-collection">
+               </span>
+              </a>
+              <div class="read-count-box is-like" data-type="top">
+               <img alt="" class="article-read-img article-heard-img" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" style="display:none"/>
+               <img alt="" class="article-read-img article-heard-img" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" style="display:block"/>
+               <span class="read-count" id="blog-digg-num">
+                点赞数
+                            9
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+           <div class="blog-tags-box">
+            <div class="tags-box artic-tag-box">
+             <span class="label">
+              分类专栏：
+             </span>
+             <a class="tag-link" href="https://blog.csdn.net/phmatthaus/category_12072874.html" rel="noopener" target="_blank">
+              QEMU/KVM
+             </a>
+             <span class="label">
+              文章标签：
+             </span>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"QEMU","ab":"new","extra":"{\"searchword\":\"QEMU\"}"}' href="https://so.csdn.net/so/search/s.do?q=QEMU&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              QEMU
+             </a>
+             <a class="tag-link" data-report-click='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' data-report-query="spm=1001.2101.3001.4223" data-report-view='{"mod":"popu_626","spm":"1001.2101.3001.4223","strategy":"KVM","ab":"new","extra":"{\"searchword\":\"KVM\"}"}' href="https://so.csdn.net/so/search/s.do?q=KVM&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" rel="noopener" target="_blank">
+              KVM
+             </a>
+            </div>
+           </div>
+           <div class="up-time">
+            <span>
+             于 2024-10-17 08:37:29 首次发布
+            </span>
+           </div>
+           <div class="slide-content-box">
+            <div class="article-copyright">
+             <div class="creativecommons">
+              版权声明：本文为博主原创文章，遵循
+              <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="noopener" target="_blank">
+               CC 4.0 BY-SA
+              </a>
+              版权协议，转载请附上原文出处链接和本声明。
+             </div>
+             <div class="article-source-link">
+              本文链接：
+              <a href="https://blog.csdn.net/phmatthaus/article/details/142959291" target="_blank">
+               https://blog.csdn.net/phmatthaus/article/details/142959291
+              </a>
+             </div>
+            </div>
+           </div>
+           <div class="operating">
+            <a class="href-article-edit slide-toggle">
+             版权
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="" id="blogHuaweiyunAdvert">
+        </div>
+        <div class="" id="blogColumnPayAdvert">
+         <div class="column-group">
+          <div class="column-group-item column-group0 column-group-item-one">
+           <div class="item-l">
+            <a class="item-target" data-report-click='{"spm":"1001.2101.3001.6332"}' data-report-view='{"spm":"1001.2101.3001.6332"}' href="https://blog.csdn.net/phmatthaus/category_12072874.html" target="_blank" title="QEMU/KVM">
+             <img alt="" class="item-target" src="https://i-blog.csdnimg.cn/blog_column_migrate/0f6ac33077145a0bee493ec857ad694d.png?x-oss-process=image/resize,m_fixed,h_224,w_224"/>
+             <span class="title item-target">
+              <span>
+               <span class="tit">
+                QEMU/KVM
+               </span>
+               <span class="dec">
+                专栏收录该内容
+               </span>
+              </span>
+             </span>
+            </a>
+           </div>
+           <div class="item-m">
+            <span>
+             174 篇文章
+            </span>
+            <span class="old-add-new-box">
+             <span class="price">
+              ¥49.90
+             </span>
+             <span class="oldprice">
+              ¥99.00
+             </span>
+            </span>
+           </div>
+           <div class="item-r">
+            <a class="item-target article-column-subscribe">
+             已订阅
+            </a>
+            <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-click='{"spm":"1001.2015.3001.8590"}' data-report-view='{"spm":"1001.2015.3001.8590"}'>
+             8折续费
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="learning_the_member_box">
+         <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank">
+          <div class="left">
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png"/>
+           <span>
+            您已是超级会员，正在免费阅读会员专享内容
+           </span>
+          </div>
+          <div class="right">
+           <span>
+            查看更多超级会员权益
+           </span>
+           <img alt="" src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png"/>
+          </div>
+         </a>
+        </div>
+        <article class="baidu_pl">
+         <div class="article_content clearfix" id="article_content">
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css" rel="stylesheet"/>
+          <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css" rel="stylesheet"/>
+          <div class="htmledit_views atom-one-light" id="content_views">
+           <p>
+            接前一篇文章：
+            <a href="https://phmatthaus.blog.csdn.net/article/details/136131248" rel="nofollow" title="QEMU源码全解析 —— 内存虚拟化（4）">
+             QEMU源码全解析 —— 内存虚拟化（4）
+            </a>
+           </p>
+           <p>
+           </p>
+           <p>
+            本文内容参考：
+           </p>
+           <p>
+            《趣谈
+            <a href="https://so.csdn.net/so/search?q=Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&amp;spm=1001.2101.3001.7020" title="Linux操作系统">
+             Linux操作系统
+            </a>
+            》 —— 刘超，
+            <a href="https://so.csdn.net/so/search?q=%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4&amp;spm=1001.2101.3001.7020" title="极客时间">
+             极客时间
+            </a>
+           </p>
+           <p>
+            《
+            <a href="https://so.csdn.net/so/search?q=QEMU&amp;spm=1001.2101.3001.7020" title="QEMU">
+             QEMU
+            </a>
+            /KVM源码解析与应用》 —— 李强，机械工业出版社
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/leiyanjie8995/article/details/127603209" title="QEMU内存管理模型">
+             QEMU内存管理模型
+            </a>
+           </p>
+           <p>
+            <a href="https://blog.csdn.net/JaCenz/article/details/130288702" title="浅谈QEMU Memory Region 与 Address Space">
+             浅谈QEMU Memory Region 与 Address Space
+            </a>
+           </p>
+           <p>
+            特此致谢！
+           </p>
+           <p>
+           </p>
+           <p>
+            距离上一篇文章（
+            <a href="https://blog.csdn.net/phmatthaus/article/details/136131248?sharetype=blogdetail&amp;sharerId=136131248&amp;sharerefer=PC&amp;sharesource=phmatthaus&amp;spm=1011.2480.3001.8118" title="QEMU源码全解析 —— 内存虚拟化（4）_qemu 内存-CSDN博客">
+             QEMU源码全解析 —— 内存虚拟化（4）_qemu 内存-CSDN博客
+            </a>
+            ）的发表已经过去了半年多快一年了，并非笔者懈怠了，更不是对虚拟化没兴趣了，而是这半年太忙了。4月份入职新公司后一上来就“跑步前进”，再加上有其它“课题”需要研究，因此一直没有继续这一部分了，真的感觉很对不起虚拟化。不过忙碌的日子终于过去了，可以至少有一部分时间和精力回到这一块，继续向前进行探索和研究。
+           </p>
+           <p>
+            一上来先得“圆扣”，找到上一回讲到哪了。上一回或者说前几回解析了内存虚拟化的基础数据结构，基础有了，接下来该开始讲解具体代码了。
+           </p>
+           <h4>
+            2. QEMU虚拟机内存初始化
+           </h4>
+           <p>
+            内存作为虚拟机的基础部分，其初始化也是在pc_init1函数中进行的。为了便于理解和回顾，这里再次贴出pc_init1函数源码，在hw/i386/pc_piix.c中，如下：
+           </p>
+           <pre><code class="language-cpp">/* PC hardware initialisation */
+static void pc_init1(MachineState *machine,
+                     const char *host_type, const char *pci_type)
+{
+    PCMachineState *pcms = PC_MACHINE(machine);
+    PCMachineClass *pcmc = PC_MACHINE_GET_CLASS(pcms);
+    X86MachineState *x86ms = X86_MACHINE(machine);
+    MemoryRegion *system_memory = get_system_memory();
+    MemoryRegion *system_io = get_system_io();
+    PCIBus *pci_bus = NULL;
+    ISABus *isa_bus;
+    int piix3_devfn = -1;
+    qemu_irq smi_irq;
+    GSIState *gsi_state;
+    BusState *idebus[MAX_IDE_BUS];
+    ISADevice *rtc_state;
+    MemoryRegion *ram_memory;
+    MemoryRegion *pci_memory = NULL;
+    MemoryRegion *rom_memory = system_memory;
+    ram_addr_t lowmem;
+    uint64_t hole64_size = 0;
+
+    /*
+     * Calculate ram split, for memory below and above 4G.  It's a bit
+     * complicated for backward compatibility reasons ...
+     *
+     *  - Traditional split is 3.5G (lowmem = 0xe0000000).  This is the
+     *    default value for max_ram_below_4g now.
+     *
+     *  - Then, to gigabyte align the memory, we move the split to 3G
+     *    (lowmem = 0xc0000000).  But only in case we have to split in
+     *    the first place, i.e. ram_size is larger than (traditional)
+     *    lowmem.  And for new machine types (gigabyte_align = true)
+     *    only, for live migration compatibility reasons.
+     *
+     *  - Next the max-ram-below-4g option was added, which allowed to
+     *    reduce lowmem to a smaller value, to allow a larger PCI I/O
+     *    window below 4G.  qemu doesn't enforce gigabyte alignment here,
+     *    but prints a warning.
+     *
+     *  - Finally max-ram-below-4g got updated to also allow raising lowmem,
+     *    so legacy non-PAE guests can get as much memory as possible in
+     *    the 32bit address space below 4G.
+     *
+     *  - Note that Xen has its own ram setup code in xen_ram_init(),
+     *    called via xen_hvm_init_pc().
+     *
+     * Examples:
+     *    qemu -M pc-1.7 -m 4G    (old default)    -&gt; 3584M low,  512M high
+     *    qemu -M pc -m 4G        (new default)    -&gt; 3072M low, 1024M high
+     *    qemu -M pc,max-ram-below-4g=2G -m 4G     -&gt; 2048M low, 2048M high
+     *    qemu -M pc,max-ram-below-4g=4G -m 3968M  -&gt; 3968M low (=4G-128M)
+     */
+    if (xen_enabled()) {
+        xen_hvm_init_pc(pcms, &amp;ram_memory);
+    } else {
+        ram_memory = machine-&gt;ram;
+        if (!pcms-&gt;max_ram_below_4g) {
+            pcms-&gt;max_ram_below_4g = 0xe0000000; /* default: 3.5G */
+        }
+        lowmem = pcms-&gt;max_ram_below_4g;
+        if (machine-&gt;ram_size &gt;= pcms-&gt;max_ram_below_4g) {
+            if (pcmc-&gt;gigabyte_align) {
+                if (lowmem &gt; 0xc0000000) {
+                    lowmem = 0xc0000000;
+                }
+                if (lowmem &amp; (1 * GiB - 1)) {
+                    warn_report("Large machine and max_ram_below_4g "
+                                "(%" PRIu64 ") not a multiple of 1G; "
+                                "possible bad performance.",
+                                pcms-&gt;max_ram_below_4g);
+                }
+            }
+        }
+
+        if (machine-&gt;ram_size &gt;= lowmem) {
+            x86ms-&gt;above_4g_mem_size = machine-&gt;ram_size - lowmem;
+            x86ms-&gt;below_4g_mem_size = lowmem;
+        } else {
+            x86ms-&gt;above_4g_mem_size = 0;
+            x86ms-&gt;below_4g_mem_size = machine-&gt;ram_size;
+        }
+    }
+
+    pc_machine_init_sgx_epc(pcms);
+    x86_cpus_init(x86ms, pcmc-&gt;default_cpu_version);
+
+    if (pcmc-&gt;kvmclock_enabled) {
+        kvmclock_create(pcmc-&gt;kvmclock_create_always);
+    }
+
+    if (pcmc-&gt;pci_enabled) {
+        Object *phb;
+
+        pci_memory = g_new(MemoryRegion, 1);
+        memory_region_init(pci_memory, NULL, "pci", UINT64_MAX);
+        rom_memory = pci_memory;
+
+        phb = OBJECT(qdev_new(host_type));
+        object_property_add_child(OBJECT(machine), "i440fx", phb);
+        object_property_set_link(phb, PCI_HOST_PROP_RAM_MEM,
+                                 OBJECT(ram_memory), &amp;error_fatal);
+        object_property_set_link(phb, PCI_HOST_PROP_PCI_MEM,
+                                 OBJECT(pci_memory), &amp;error_fatal);
+        object_property_set_link(phb, PCI_HOST_PROP_SYSTEM_MEM,
+                                 OBJECT(system_memory), &amp;error_fatal);
+        object_property_set_link(phb, PCI_HOST_PROP_IO_MEM,
+                                 OBJECT(system_io), &amp;error_fatal);
+        object_property_set_uint(phb, PCI_HOST_BELOW_4G_MEM_SIZE,
+                                 x86ms-&gt;below_4g_mem_size, &amp;error_fatal);
+        object_property_set_uint(phb, PCI_HOST_ABOVE_4G_MEM_SIZE,
+                                 x86ms-&gt;above_4g_mem_size, &amp;error_fatal);
+        object_property_set_str(phb, I440FX_HOST_PROP_PCI_TYPE, pci_type,
+                                &amp;error_fatal);
+        sysbus_realize_and_unref(SYS_BUS_DEVICE(phb), &amp;error_fatal);
+
+        pci_bus = PCI_BUS(qdev_get_child_bus(DEVICE(phb), "pci.0"));
+        pci_bus_map_irqs(pci_bus,
+                         xen_enabled() ? xen_pci_slot_get_pirq
+                                       : pc_pci_slot_get_pirq);
+        pcms-&gt;bus = pci_bus;
+
+        hole64_size = object_property_get_uint(phb,
+                                               PCI_HOST_PROP_PCI_HOLE64_SIZE,
+                                               &amp;error_abort);
+    }
+
+    pc_guest_info_init(pcms);
+
+    if (pcmc-&gt;smbios_defaults) {
+        MachineClass *mc = MACHINE_GET_CLASS(machine);
+        /* These values are guest ABI, do not change */
+        smbios_set_defaults("QEMU", mc-&gt;desc,
+                            mc-&gt;name, pcmc-&gt;smbios_legacy_mode,
+                            pcmc-&gt;smbios_uuid_encoded,
+                            pcms-&gt;smbios_entry_point_type);
+    }
+
+    /* allocate ram and load rom/bios */
+    if (!xen_enabled()) {
+        pc_memory_init(pcms, system_memory, rom_memory, hole64_size);
+    } else {
+        assert(machine-&gt;ram_size == x86ms-&gt;below_4g_mem_size +
+                                    x86ms-&gt;above_4g_mem_size);
+
+        pc_system_flash_cleanup_unused(pcms);
+        if (machine-&gt;kernel_filename != NULL) {
+            /* For xen HVM direct kernel boot, load linux here */
+            xen_load_linux(pcms);
+        }
+    }
+
+    gsi_state = pc_gsi_create(&amp;x86ms-&gt;gsi, pcmc-&gt;pci_enabled);
+
+    if (pcmc-&gt;pci_enabled) {
+        PIIX3State *piix3;
+        PCIDevice *pci_dev;
+
+        pci_dev = pci_create_simple_multifunction(pci_bus, -1, TYPE_PIIX3_DEVICE);
+
+        if (xen_enabled()) {
+            pci_device_set_intx_routing_notifier(
+                        pci_dev, piix_intx_routing_notifier_xen);
+
+            /*
+             * Xen supports additional interrupt routes from the PCI devices to
+             * the IOAPIC: the four pins of each PCI device on the bus are also
+             * connected to the IOAPIC directly.
+             * These additional routes can be discovered through ACPI.
+             */
+            pci_bus_irqs(pci_bus, xen_intx_set_irq, pci_dev,
+                         XEN_IOAPIC_NUM_PIRQS);
+        }
+
+        piix3 = PIIX3_PCI_DEVICE(pci_dev);
+        piix3-&gt;pic = x86ms-&gt;gsi;
+        piix3_devfn = piix3-&gt;dev.devfn;
+        isa_bus = ISA_BUS(qdev_get_child_bus(DEVICE(piix3), "isa.0"));
+        rtc_state = ISA_DEVICE(object_resolve_path_component(OBJECT(pci_dev),
+                                                             "rtc"));
+    } else {
+        isa_bus = isa_bus_new(NULL, system_memory, system_io,
+                              &amp;error_abort);
+
+        rtc_state = isa_new(TYPE_MC146818_RTC);
+        qdev_prop_set_int32(DEVICE(rtc_state), "base_year", 2000);
+        isa_realize_and_unref(rtc_state, isa_bus, &amp;error_fatal);
+
+        i8257_dma_init(isa_bus, 0);
+        pcms-&gt;hpet_enabled = false;
+    }
+    isa_bus_register_input_irqs(isa_bus, x86ms-&gt;gsi);
+
+    if (x86ms-&gt;pic == ON_OFF_AUTO_ON || x86ms-&gt;pic == ON_OFF_AUTO_AUTO) {
+        pc_i8259_create(isa_bus, gsi_state-&gt;i8259_irq);
+    }
+
+    if (pcmc-&gt;pci_enabled) {
+        ioapic_init_gsi(gsi_state, "i440fx");
+    }
+
+    if (tcg_enabled()) {
+        x86_register_ferr_irq(x86ms-&gt;gsi[13]);
+    }
+
+    pc_vga_init(isa_bus, pcmc-&gt;pci_enabled ? pci_bus : NULL);
+
+    assert(pcms-&gt;vmport != ON_OFF_AUTO__MAX);
+    if (pcms-&gt;vmport == ON_OFF_AUTO_AUTO) {
+        pcms-&gt;vmport = xen_enabled() ? ON_OFF_AUTO_OFF : ON_OFF_AUTO_ON;
+    }
+
+    /* init basic PC hardware */
+    pc_basic_device_init(pcms, isa_bus, x86ms-&gt;gsi, rtc_state, true,
+                         0x4);
+
+    pc_nic_init(pcmc, isa_bus, pci_bus);
+
+    if (pcmc-&gt;pci_enabled) {
+        PCIDevice *dev;
+
+        dev = pci_create_simple(pci_bus, piix3_devfn + 1, TYPE_PIIX3_IDE);
+        pci_ide_create_devs(dev);
+        idebus[0] = qdev_get_child_bus(&amp;dev-&gt;qdev, "ide.0");
+        idebus[1] = qdev_get_child_bus(&amp;dev-&gt;qdev, "ide.1");
+        pc_cmos_init(pcms, idebus[0], idebus[1], rtc_state);
+    }
+#ifdef CONFIG_IDE_ISA
+    else {
+        DriveInfo *hd[MAX_IDE_BUS * MAX_IDE_DEVS];
+        int i;
+
+        ide_drive_get(hd, ARRAY_SIZE(hd));
+        for (i = 0; i &lt; MAX_IDE_BUS; i++) {
+            ISADevice *dev;
+            char busname[] = "ide.0";
+            dev = isa_ide_init(isa_bus, ide_iobase[i], ide_iobase2[i],
+                               ide_irq[i],
+                               hd[MAX_IDE_DEVS * i], hd[MAX_IDE_DEVS * i + 1]);
+            /*
+             * The ide bus name is ide.0 for the first bus and ide.1 for the
+             * second one.
+             */
+            busname[4] = '0' + i;
+            idebus[i] = qdev_get_child_bus(DEVICE(dev), busname);
+        }
+        pc_cmos_init(pcms, idebus[0], idebus[1], rtc_state);
+    }
+#endif
+
+    if (pcmc-&gt;pci_enabled &amp;&amp; machine_usb(machine)) {
+        pci_create_simple(pci_bus, piix3_devfn + 2, TYPE_PIIX3_USB_UHCI);
+    }
+
+    if (pcmc-&gt;pci_enabled &amp;&amp; x86_machine_is_acpi_enabled(X86_MACHINE(pcms))) {
+        PCIDevice *piix4_pm;
+
+        smi_irq = qemu_allocate_irq(pc_acpi_smi_interrupt, first_cpu, 0);
+        piix4_pm = pci_new(piix3_devfn + 3, TYPE_PIIX4_PM);
+        qdev_prop_set_uint32(DEVICE(piix4_pm), "smb_io_base", 0xb100);
+        qdev_prop_set_bit(DEVICE(piix4_pm), "smm-enabled",
+                          x86_machine_is_smm_enabled(x86ms));
+        pci_realize_and_unref(piix4_pm, pci_bus, &amp;error_fatal);
+
+        qdev_connect_gpio_out(DEVICE(piix4_pm), 0, x86ms-&gt;gsi[9]);
+        qdev_connect_gpio_out_named(DEVICE(piix4_pm), "smi-irq", 0, smi_irq);
+        pcms-&gt;smbus = I2C_BUS(qdev_get_child_bus(DEVICE(piix4_pm), "i2c"));
+        /* TODO: Populate SPD eeprom data.  */
+        smbus_eeprom_init(pcms-&gt;smbus, 8, NULL, 0);
+
+        object_property_add_link(OBJECT(machine), PC_MACHINE_ACPI_DEVICE_PROP,
+                                 TYPE_HOTPLUG_HANDLER,
+                                 (Object **)&amp;x86ms-&gt;acpi_dev,
+                                 object_property_allow_set_link,
+                                 OBJ_PROP_LINK_STRONG);
+        object_property_set_link(OBJECT(machine), PC_MACHINE_ACPI_DEVICE_PROP,
+                                 OBJECT(piix4_pm), &amp;error_abort);
+    }
+
+    if (machine-&gt;nvdimms_state-&gt;is_enabled) {
+        nvdimm_init_acpi_state(machine-&gt;nvdimms_state, system_io,
+                               x86_nvdimm_acpi_dsmio,
+                               x86ms-&gt;fw_cfg, OBJECT(pcms));
+    }
+}</code></pre>
+           <p>
+            pc_init1函数很长，有将近300行，不过这里只关注与内存初始化相关的代码。
+           </p>
+           <p>
+            内存分为低端内存和高端内存，之所以会有这个区分，是因为一些有传统设备的虚拟机，其设备必须使用一些地址空间在4GB以下的内存。低端内存和高端内存的计算见以下代码片段：
+           </p>
+           <pre><code class="language-cpp">        ram_memory = machine-&gt;ram;
+        if (!pcms-&gt;max_ram_below_4g) {
+            pcms-&gt;max_ram_below_4g = 0xe0000000; /* default: 3.5G */
+        }
+        lowmem = pcms-&gt;max_ram_below_4g;
+        if (machine-&gt;ram_size &gt;= pcms-&gt;max_ram_below_4g) {
+            if (pcmc-&gt;gigabyte_align) {
+                if (lowmem &gt; 0xc0000000) {
+                    lowmem = 0xc0000000;
+                }
+                if (lowmem &amp; (1 * GiB - 1)) {
+                    warn_report("Large machine and max_ram_below_4g "
+                                "(%" PRIu64 ") not a multiple of 1G; "
+                                "possible bad performance.",
+                                pcms-&gt;max_ram_below_4g);
+                }
+            }
+        }
+
+        if (machine-&gt;ram_size &gt;= lowmem) {
+            x86ms-&gt;above_4g_mem_size = machine-&gt;ram_size - lowmem;
+            x86ms-&gt;below_4g_mem_size = lowmem;
+        } else {
+            x86ms-&gt;above_4g_mem_size = 0;
+            x86ms-&gt;below_4g_mem_size = machine-&gt;ram_size;
+        }
+    }</code></pre>
+           <p>
+            如果用户在命令行指定了max-ram-below-4g参数，则使用用户指定的参数，这可以让一些非传统的虚拟机使用更多的4GB以下的地址空间；如果用户并未指定max-ram-below-4g参数，则又要分为两种情况：
+           </p>
+           <p>
+            1）传统的虚拟机（qemu-2.5版本以下）使用3.5GB（0xe0000000）作为分界线；
+           </p>
+           <pre><code class="language-cpp">        ram_memory = machine-&gt;ram;
+        if (!pcms-&gt;max_ram_below_4g) {
+            pcms-&gt;max_ram_below_4g = 0xe0000000; /* default: 3.5G */
+        }
+        lowmem = pcms-&gt;max_ram_below_4g;</code></pre>
+           <p>
+            2）在（更）高版本的虚拟机下，会设置gigabyte_align。当虚拟机的内存大于传统低端内存（3.5GB）时，会以3GB（0xc0000000）作为分界线。
+           </p>
+           <pre><code class="language-cpp">        if (machine-&gt;ram_size &gt;= pcms-&gt;max_ram_below_4g) {
+            if (pcmc-&gt;gigabyte_align) {
+                if (lowmem &gt; 0xc0000000) {
+                    lowmem = 0xc0000000;
+                }
+                if (lowmem &amp; (1 * GiB - 1)) {
+                    warn_report("Large machine and max_ram_below_4g "
+                                "(%" PRIu64 ") not a multiple of 1G; "
+                                "possible bad performance.",
+                                pcms-&gt;max_ram_below_4g);
+                }
+            }
+        }</code></pre>
+           <p>
+            超过lowmem的地址就是高端内存了，否则就是低端内存。
+           </p>
+           <pre><code class="language-cpp">        if (machine-&gt;ram_size &gt;= lowmem) {
+            x86ms-&gt;above_4g_mem_size = machine-&gt;ram_size - lowmem;
+            x86ms-&gt;below_4g_mem_size = lowmem;
+        } else {
+            x86ms-&gt;above_4g_mem_size = 0;
+            x86ms-&gt;below_4g_mem_size = machine-&gt;ram_size;
+        }</code></pre>
+           <p>
+            由于本回是隔了很长时间之后才回来继续之前研究的，所以更多以回顾和恢复状态为主，内容就只讲到这里了。随着状态的逐步恢复，下一回开始回到正轨。更多内容请看下回。
+           </p>
+          </div>
+         </div>
+        </article>
+       </div>
+       <div class="directory-boxshadow-dialog" style="display:none;">
+        <div class="directory-boxshadow-dialog-box">
+        </div>
+        <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new">
+         <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"/>
+         <div class="vip-limited-time-top">
+          确定要放弃本次机会？
+         </div>
+         <span class="vip-limited-time-text">
+          福利倒计时
+         </span>
+         <div class="limited-time-box-new">
+          <span class="time-hour">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-minite">
+          </span>
+          <i>
+           :
+          </i>
+          <span class="time-second">
+          </span>
+         </div>
+         <div class="limited-time-vip-box">
+          <p>
+           <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"/>
+           <span class="def">
+            立减 ¥
+           </span>
+           <span class="active limited-num">
+           </span>
+          </p>
+          <span class="">
+           普通VIP年卡可用
+          </span>
+         </div>
+         <a class="limited-time-btn-new" data-report-click='{"spm":"1001.2101.3001.9621"}' data-report-query="spm=1001.2101.3001.9621" href="https://mall.csdn.net/vip">
+          立即使用
+         </a>
+        </div>
+       </div>
+       <a id="commentBox" name="commentBox">
+       </a>
+      </main>
+     </div>
+     <div class="recommend-right1 align-items-stretch clearfix" data-type="recommend" id="rightAsideConcision">
+      <aside class="recommend-right_aside">
+       <div id="recommend-right-concision">
+        <div class="flex-column aside-box groupfile" id="groupfileConcision">
+         <div class="groupfile-div1">
+          <h3 class="aside-title">
+           目录
+          </h3>
+          <div class="align-items-stretch group_item">
+           <div class="pos-box">
+            <div class="scroll-box">
+             <div class="toc-box">
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </aside>
+     </div>
+    </div>
+    <div class="mask-dark">
+    </div>
+    <div class="skin-boxshadow">
+    </div>
+    <div class="directory-boxshadow">
+    </div>
+    <div style="display:none;">
+     <img onerror='setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){window="\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74"}},3000);' src=""/>
+    </div>
+    <div class="keyword-dec-box" id="keywordDecBox">
+    </div>
+   </link>
+  </link>
+ </body>
+ <!-- 富文本柱状图  -->
+ <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css" rel="stylesheet">
+  <link href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css" rel="stylesheet"/>
+  <link href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-light.css" rel="stylesheet"/>
+ </link>
+</html>

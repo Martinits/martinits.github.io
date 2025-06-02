@@ -21,6 +21,7 @@
 - [Interrupt Virtualization](virt/intr.md)
 - [Memory Virtualization](virt/mem.md)
 - [IO Virtualization](virt/io.md)
+- [Books & Blogs](virt/book.md)
 
 ## Kernel
 
