@@ -113,7 +113,8 @@
      - 乱读行为
        - SEAM mode用private HKID读非TD内存，或者用shared HKID读TD内存，或者MAC校验失败，都会返回全0数据，产生poison
        - SEAM mode，如果crypto mode没开integrity check或者使用logical mode，这时shared HKID去读TD内存，返回全0，不产生poison或MCE
-       - 非SEAM mode读TD内存（不管用shared还是private HKID），speculative execution时读到全0（毕竟speculative execution没法直接报MCE），speculative execution生效时（或者没有被speculative而直接执行时）会触发MCE，不产生poison
+       - 非SEAM mode读private（TD ownership bit = 1）内存（不管用shared还是private HKID）读到全0，不额外产生poison
+       - 不管什么情况，读到（之前的错误访问产生的）poison，如果cpu认为能继续执行后面的指令（大部分情况），产生MCE；否则unbreakable shutdown
      - 乱写行为
        - 写内存不check TD ownership，属于被动防御，TDX Module或者Guest后面读该内存时会检测到内存被写坏	了
      - 善意的Host VMM应当在把一块内存从private变成shared之前做full line write，确保清除掉TD Owner bit以及可能的poision
